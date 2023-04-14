@@ -8,7 +8,7 @@ require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT
-const mongodbURI =process.env.MONGODB_URI
+const mongodbURI = process.env.MONGODB_URI
 app.use(bodyParser.json());
 
 app.use((req, res, next) => {
@@ -19,7 +19,7 @@ app.use((req, res, next) => {
 });
 
 //Change below routes:
-// app.use('/bank/customer', );
+app.use('/bank/customer', customerRoutes);
 app.use('/bank/admin', adminRoutes);
 // app.use('/bank/transaction', );
 // app.use('/auth',authRoutes)

@@ -3,7 +3,7 @@ const adminSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true },
     password: { type: String, required: true },
-    maxLoanAmount: { type: Number, required: true, default: 100000 },
+    TotalAmount: { type: Number, required: true, default: 100000 },
 });
 
 module.exports = mongoose.model("Admin", adminSchema);
