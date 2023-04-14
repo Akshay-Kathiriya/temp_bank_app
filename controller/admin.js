@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken')
 const path = require('path');
 require('dotenv').config();
 
+const secretKey = process.env.TOKEN_SECRET_KEY;
+
 exports.signup = async (req, res, next) => {
 
     // const errors = validationResult(req);
@@ -70,7 +72,7 @@ exports.login = async (req, res, next) => {
         const token = jwt.sign({
             email: loadedUser.email,
             userId: loadedUser._id.toString()
-        }, process.env.TOKEN_SECRET_KEY,
+        }, secretKey,
             { expiresIn: '1h' }
         );
         res.status(200)
@@ -88,4 +90,8 @@ exports.login = async (req, res, next) => {
 
     }
 
+}
+
+exports.getCustomerDetails=(req, res, next)=>{
+        
 }

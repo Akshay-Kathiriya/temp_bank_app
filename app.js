@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
+const port = process.env.PORT
+const mongodbURI =process.env.MONGODB_URI
 app.use(bodyParser.json());
 
 app.use((req, res, next) => {
@@ -31,9 +33,9 @@ app.use((error, req, res, next) => { //error handling middleware
 });
 
 mongoose
-    .connect(process.env.MONGODB_URI)
+    .connect(mongodbURI)
     .then(() => {
-        app.listen(8080);
+        app.listen(port);
         console.log('connected');
     })
     .catch(err => {
