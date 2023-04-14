@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require('body-parser');
 //const path = require('path');
 const adminRoutes = require('./routes/admin');
+const customerRoutes = require('./routes/customer');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
