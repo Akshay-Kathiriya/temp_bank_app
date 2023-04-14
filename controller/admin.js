@@ -2,6 +2,8 @@ const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs')
 const Admin = require('../models/admin')
 const jwt = require('jsonwebtoken')
+const path = require('path');
+require('dotenv').config();
 
 exports.signup = async (req, res, next) => {
 
@@ -42,6 +44,7 @@ exports.signup = async (req, res, next) => {
 
 
 exports.login = async (req, res, next) => {
+
     const email = req.body.email;
     const password = req.body.password;
 
@@ -67,7 +70,7 @@ exports.login = async (req, res, next) => {
         const token = jwt.sign({
             email: loadedUser.email,
             userId: loadedUser._id.toString()
-        }, 'somesupersecretsecret',
+        }, process.env.TOKEN_SECRET_KEY,
             { expiresIn: '1h' }
         );
         res.status(200)
