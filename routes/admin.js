@@ -9,8 +9,8 @@ const router = express.Router();
 // const isAuth = require('../middleware/is-auth');
 
 
-router.post('/signup', adminController.signup);
-router.post('/login', adminController.login);
+router.post('/signup', authController.Admin_signup);
+router.post('/login', authController.login);
 router.get('/getCustomerDetails', adminController.getCustomerDetails);
 router.get('/total', adminController.totalAmount);
 
