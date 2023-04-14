@@ -4,7 +4,7 @@ const Admin = require('../models/admin')
 const jwt = require('jsonwebtoken')
 const path = require('path');
 require('dotenv').config();
-
+const Customer = require('../models/customer');
 const secretKey = process.env.TOKEN_SECRET_KEY;
 
 exports.signup = async (req, res, next) => {
@@ -92,6 +92,36 @@ exports.login = async (req, res, next) => {
 
 }
 
-exports.getCustomerDetails=(req, res, next)=>{
-        
+exports.getCustomerDetails= async(req, res)=>{
+
+   try{
+    //we can add below code separately using middleware authenticationtoken
+    // const token = req.body.token;
+    // const adminDetails = jwt.verify(token, secretKey); 
+    const details = await Customer.find();
+    res.json(details);
+   }
+   catch(err){
+    console.error(err);
+    res.status(500).send('Server Error');
+   }
 }
+
+
+exports.totalAmount = async(req, res)=>{
+    try{
+        let total = 0;
+        const details = await Customer.find();
+        // const items = JSON.stringify(details)
+       details.reduce(item=>{
+            console.log(typeof item.balance)
+            total+=item.balance;
+        })
+        res.send(total);
+    }catch(err){
+        console.log(err);
+        res.status(500).send('Server Error');
+    }
+}
+
+
