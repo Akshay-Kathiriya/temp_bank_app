@@ -23,63 +23,60 @@ exports.getDetails = async(req, res) => {
 
 
 exports.amountTransfer = async(req, res) => {
-    const type = req.body.type;
-    let amountType;
-    if (type === "debit") {
-        amountType = "debitAmount"
-    } else {
-        amountType = "creditAmount"
-    }
-    const transfer = new Transaction({
-        senderAccountNumber: req.body.senderAccountNumber,
-        receiverAccountNumber: req.body.receiverAccountNumber,
-        type: type,
-        amount: { amountType: req.body.amountType }
-    });
-    console.log(transfer.receiverAccountNumber + " " + transfer.senderAccountNumber + " " + transfer.amount);
-    var receiverAccount;
-    var senderAccount;
-
     try {
-        const account = await Customer.findOne({
-            'accountNumber': transfer.receiverAccountNumber
-        })
-        receiverAccount = account;
-        console.log(receiverAccount);
-        receiverAccount.balance = receiverAccount.balance + transfer.amount;
-        const data = await receiverAccount.save();
-        try {
-            res.status(200).send(data);
-        } catch (error) {
-            res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-        }
-    } catch (error) {
-        console.log(error);
-    }
-
-    try {
-        const account = await Customer.findOne({
-            'accountNumber': transfer.senderAccountNumber
-        });
-        senderAccount = account;
-        console.log(senderAccount);
-        if (null != transfer.amount && undefined != transfer.amount &&
-            transfer.amount > 0) {
-            if (senderAccount.balance > transfer.amount) {
-                senderAccount.balance = senderAccount.balance - transfer.amount;
-            } else {
-                res.status(400).send({ message: "The account does not have sufficient balance" });
-            }
+        const type = req.body.type;
+        let amountType;
+        if (type === "debit") {
+            amountType = "debitAmount";
         } else {
-            res.status(400).send({ message: "Invalid input !!" });
+            amountType = "creditAmount";
         }
-        const data = await senderAccount.save();
-        try {
-            res.status(200).send(data);
-        } catch (error) {
-            res.status(500).send({ message: error.message || "Some internal error occurred !!" });
+        //Transaction insertion
+        const transfer = new Transaction({
+            senderAccountNumber: req.body.senderAccountNumber,
+            receiverAccountNumber: req.body.receiverAccountNumber,
+            type: type,
+            amount: {
+                [amountType]: req.body.amountType
+            },
+        });
+        console.log(
+            transfer.receiverAccountNumber +
+            " " +
+            transfer.senderAccountNumber +
+            " " +
+            transfer.amount
+        );
+
+        // updating customer data:
+        const receiverAccount = await Customer.findOne({
+            accountNumber: transfer.receiverAccountNumber,
+        });
+        console.log(receiverAccount);
+
+        const senderAccount = await Customer.findOne({
+            accountNumber: transfer.senderAccountNumber,
+        });
+        console.log(senderAccount);
+
+        if (!receiverAccount) {
+            throw new Error("Could not find Receiver Account !!");
         }
+        if (!senderAccount) {
+            throw new Error("Could not find Sender Account !!");
+        }
+
+        if (transfer.amount > 0 && senderAccount.balance > transfer.amount) {
+            receiverAccount.balance = receiverAccount.balance + transfer.amount;
+            senderAccount.balance = senderAccount.balance - transfer.amount;
+        } else {
+            throw new Error("The account does not have sufficient balance");
+        }
+        await receiverAccount.save();
+        await senderAccount.save();
+        res.status(200).send({ message: "Transfer successfull!!" });
     } catch (error) {
         console.log(error);
+        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
-}
+};
