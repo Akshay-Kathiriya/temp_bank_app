@@ -6,8 +6,8 @@ module.exports = (req, res, next) => {
         error.statuCode = 401;
         throw error;
     }
-    const token = authHeader;
-    // console.log("token",token);
+    const token = authHeader.replace('Bearer ','');
+    console.log("token",token);
     let decodedToken;
     try {
         decodedToken = jwt.verify(token, 'somesupersecretsecret');

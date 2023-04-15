@@ -30,7 +30,10 @@ router.post('/signup', // [
 
 router.post('/Login', authController.login);
 
+//router.post('/loanrequest', isAuth, customerController.loanrequest);
+
 router.get('/:id', customerController.getDetails);
-router.get('/transferAmount', customerController.amountTransfer)
+
+router.post('/tranferamount', customerController.amountTransfer);
 
 module.exports = router;

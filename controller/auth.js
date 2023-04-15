@@ -81,12 +81,19 @@ exports.login = async(req, res, next) => {
             email: loadedUser.email,
             userId: loadedUser._id.toString()
         }, secretKey, { expiresIn: '1h' });
+
+        // if(loadedUser){
+        // console.log(loadedUser)
+        // req.session.userId = loadedUser._id;
+        // }
+        
         res.status(200)
             .json({
                 message: "Login sucessful",
                 token: token,
                 userId: loadedUser._id.toString()
             })
+
     } catch (err) {
         if (!err.statuCode) {
             err.statuCode = 500;
@@ -125,7 +132,6 @@ Customer_signup = async(req, res, next) => {
         phone_no: req.body.phone_no,
         address: req.body.address,
         password: req.body.password
-
     }
     const userExistsAlready = await Customer.find({ email: userToCreate.email })
     if (userExistsAlready.length > 0) {

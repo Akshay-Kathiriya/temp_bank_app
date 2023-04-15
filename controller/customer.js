@@ -20,6 +20,8 @@ exports.getDetails = async(req, res) => {
         return res.status(500).send(err)
     }
 }
+
+
 exports.amountTransfer = async(req, res) => {
     const type = req.body.type;
     let amountType;
