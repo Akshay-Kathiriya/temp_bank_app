@@ -26,26 +26,26 @@ const customerSchema = new mongoose.Schema({
     accountNumber: {
         type: Number,
         required: true,
-        unique: true,
+        // unique: true,
     },
     balance: {
         type: Number,
         required: true,
         default: 0,
-    }
-});
+    },
 
-const transactionSchema = new mongoose.Schema({
-    type: { type: String, required: true },
-    senderAccountNumber: { type: Number, required: true },
-    receiverAccountNumber: { type: Number, required: true },
-    amount: [{
-        debitAmount: { type: Number, required: true, default: 0 },
-        creditAmount: { type: Number, required: true, default: 0 },
-    }],
-    date: { type: Date, required: true, default: Date.now }
-});
+}, { timestamps: true });
+
+// const transactionSchema = new mongoose.Schema({
+//     type: { type: String, required: true },
+//     senderAccountNumber: { type: Number, required: true },
+//     receiverAccountNumber: { type: Number, required: true },
+//     amount: {
+//         debitAmount: { type: Number, required: true, default: 0 },
+//         creditAmount: { type: Number, required: true, default: 0 },
+//     },
+//     date: { type: Date, required: true, default: Date.now }
+// });
 
 module.exports = mongoose.model("Customer", customerSchema);
-
-module.exports = mongoose.model("Transaction", transactionSchema);
+// module.exports.Transaction = mongoose.model("Transaction", transactionSchema);

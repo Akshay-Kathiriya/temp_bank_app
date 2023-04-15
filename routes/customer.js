@@ -32,8 +32,8 @@ router.post('/Login', authController.login);
 
 //router.post('/loanrequest', isAuth, customerController.loanrequest);
 
-router.get('/:id', customerController.getDetails);
+router.get('/:id', isAuth, customerController.getDetails);
 
-router.post('/tranferamount', customerController.amountTransfer);
+router.post('/tranferamount', isAuth, customerController.amountTransfer);
 
 module.exports = router;

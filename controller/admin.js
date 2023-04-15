@@ -101,8 +101,11 @@ exports.isapprove = async(req, res) => {
         res.status(500).send("Server Error");
     }
 };
+
 //loadaproval name, email,loanamount, balance,
 // http://local.../loanrequst
 // name,email,loanamount
 // http://lacal.../loanresponse
+
 // reject or approved
+

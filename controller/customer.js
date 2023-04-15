@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator')
 const Customer = require('../models/customer.js');
-const Transaction = require('../models/customer');
+const Transaction = require('../models/transaction.js');
 const bcrypt = require('bcryptjs');
 
 exports.getDetails = async(req, res) => {
@@ -31,33 +31,32 @@ exports.amountTransfer = async(req, res) => {
         } else {
             amountType = "creditAmount";
         }
+        const senderAccountNumber = req.body.senderAccountNumber;
+        const receiverAccountNumber = req.body.receiverAccountNumber;
         //Transaction insertion
         const transfer = new Transaction({
-            senderAccountNumber: req.body.senderAccountNumber,
-            receiverAccountNumber: req.body.receiverAccountNumber,
+            senderAccountNumber: senderAccountNumber,
+            receiverAccountNumber: receiverAccountNumber,
             type: type,
             amount: {
-                [amountType]: req.body.amountType
+                [amountType]: req.body.amount
             },
         });
-        console.log(
-            transfer.receiverAccountNumber +
-            " " +
-            transfer.senderAccountNumber +
-            " " +
-            transfer.amount
-        );
+        console.log(transfer);
+        console.log("------------------------------------------------------------------------")
+        await transfer.save()
+
 
         // updating customer data:
         const receiverAccount = await Customer.findOne({
-            accountNumber: transfer.receiverAccountNumber,
+            accountNumber: receiverAccountNumber,
         });
-        console.log(receiverAccount);
+        console.log("receiver sss:", receiverAccount);
 
         const senderAccount = await Customer.findOne({
-            accountNumber: transfer.senderAccountNumber,
+            accountNumber: senderAccountNumber,
         });
-        console.log(senderAccount);
+        console.log("Sender sss", senderAccount);
 
         if (!receiverAccount) {
             throw new Error("Could not find Receiver Account !!");
@@ -66,17 +65,38 @@ exports.amountTransfer = async(req, res) => {
             throw new Error("Could not find Sender Account !!");
         }
 
-        if (transfer.amount > 0 && senderAccount.balance > transfer.amount) {
-            receiverAccount.balance = receiverAccount.balance + transfer.amount;
-            senderAccount.balance = senderAccount.balance - transfer.amount;
+        let receiverbalance = receiverAccount.balance;
+        let senderbalance = senderAccount.balance;
+        if (req.body.amount > 0 && senderAccount.balance > req.body.amount) {
+            receiverbalance = receiverbalance + req.body.amount;
+            senderbalance = senderbalance - req.body.amount;
         } else {
             throw new Error("The account does not have sufficient balance");
-        }
-        await receiverAccount.save();
-        await senderAccount.save();
+        };
+        await Customer.updateOne({ accountNumber: receiverAccountNumber }, { $set: { balance: receiverbalance } })
+        await Customer.updateOne({ accountNumber: senderAccountNumber }, { $set: { balance: senderbalance } })
+
+        // await receiverAccount.save();
+        // await senderAccount.save();
         res.status(200).send({ message: "Transfer successfull!!" });
     } catch (error) {
         console.log(error);
         res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
-};
+}
+
+exports.loanrequest = async(req, res) => {
+    console.log(req.userId)
+    const customerId = req.userId;
+    const amount = req.body.amount;
+    const period = req.body.period;
+    console.log(customerId);
+    const loanSchema = new Loan({
+        customer: customerId,
+        amount,
+        period
+    });
+
+    await loanSchema.save();
+    res.send("Loan is requested.");
+}

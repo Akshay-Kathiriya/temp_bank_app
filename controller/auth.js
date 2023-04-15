@@ -86,7 +86,7 @@ exports.login = async(req, res, next) => {
         // console.log(loadedUser)
         // req.session.userId = loadedUser._id;
         // }
-        
+
         res.status(200)
             .json({
                 message: "Login sucessful",
@@ -109,12 +109,8 @@ exports.login = async(req, res, next) => {
 exports.
 Customer_signup = async(req, res, next) => {
     function generateAccountNumber() {
-        let num = ''
-        while (num.length < 4) {
-            num += Math.floor(Math.random() * 10)
-        }
-        return num
-
+        const num = Math.floor(Math.random() * 1000000000000);
+        return num;
     }
     const accountNumber = generateAccountNumber()
     const errors = validationResult(req);
