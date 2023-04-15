@@ -32,15 +32,16 @@ exports.amountTransfer = async(req, res) => {
         senderAccountNumber: req.body.senderAccountNumber,
         receiverAccountNumber: req.body.receiverAccountNumber,
         type: type,
-        amount: { amountype: req.body.amount }
+        amount: { amountType: req.body.amountType }
     });
     console.log(transfer.receiverAccountNumber + " " + transfer.senderAccountNumber + " " + transfer.amount);
     var receiverAccount;
     var senderAccount;
-    const account = await Customer.findOne({
-        'accountNumber': transfer.receiverAccountNumber
-    })
+
     try {
+        const account = await Customer.findOne({
+            'accountNumber': transfer.receiverAccountNumber
+        })
         receiverAccount = account;
         console.log(receiverAccount);
         receiverAccount.balance = receiverAccount.balance + transfer.amount;
@@ -54,12 +55,11 @@ exports.amountTransfer = async(req, res) => {
         console.log(error);
     }
 
-    const account1 = await Customer.findOne({
-        'accountNumber': transfer.senderAccountNumber
-    })
-
     try {
-        senderAccount = account1;
+        const account = await Customer.findOne({
+            'accountNumber': transfer.senderAccountNumber
+        });
+        senderAccount = account;
         console.log(senderAccount);
         if (null != transfer.amount && undefined != transfer.amount &&
             transfer.amount > 0) {
