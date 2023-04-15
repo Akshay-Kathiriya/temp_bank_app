@@ -83,3 +83,19 @@ exports.amountTransfer = async(req, res) => {
         console.log(error);
     }
 }
+
+exports.loanrequest =async (req, res)=>{
+    console.log(req.userId)
+    const customerId = req.userId;
+    const amount = req.body.amount;
+    const period = req.body.period;
+    console.log(customerId);
+    const loanSchema = new Loan({
+        customer:customerId,
+        amount,
+        period
+    });
+
+    await loanSchema.save();
+    res.send("Loan is requested.");
+}
