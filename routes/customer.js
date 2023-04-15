@@ -30,5 +30,6 @@ router.post('/signup', // [
 
 router.post('/Login', authController.login);
 
+router.post('/loanrequest',isAuth, customerController.loanrequest);
 
 module.exports = router;

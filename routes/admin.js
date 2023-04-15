@@ -13,6 +13,6 @@ router.post('/signup', authController.Admin_signup);
 router.post('/login', authController.login);
 router.get('/getCustomerDetails', isAuth, adminController.getCustomerDetails);
 router.get('/total',isAuth, adminController.totalAmount);
-router.get('/loacnrequest', adminController.loanrequest);
-
+router.get('/loanrequest',isAuth, adminController.loanrequest);
+router.post('/isapproved/',isAuth ,adminController.isapprove);
 module.exports = router;

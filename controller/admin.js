@@ -6,6 +6,7 @@ const path = require('path');
 require('dotenv').config();
 const Customer = require('../models/customer');
 const secretKey = process.env.TOKEN_SECRET_KEY;
+const loan = require('../models/loan')
 
 // exports.signup = async (req, res, next) => {
 
@@ -129,13 +130,41 @@ exports.totalAmount = async(req, res)=>{
     }
 }
 
-exports.loanrequest = async ( req, res)=>{
+exports.loanrequest = async (req, res)=>{
     try{
-        res.status(200).send({approved:'yes'});
+        const loanDetails = await loan.find();
+        res.status(200).send(loanDetails);
+        
+
     }catch(err){
         console.log(err);
         res.status(500).send('Server Error');
     }
+}
+
+exports.isapprove = async (req, res)=>{
+    try{
+    const customerId = req.body.id;
+    const isapproved = req.body.status;
+    // ["pending", "approved", "rejected"]
+    const newDetails = {
+        customer: customerId,
+        status: isapproved
+    }
+
+    let updateLoanDetails = await loan.updateOne({"customer":customerId},{$set: newDetails});
+    
+    if(!updateLoanDetails){
+        res.send("Failed")
+    }
+    res.send("Updated.")
+
+    
+    }catch(err){
+        console.log(err);
+        res.status(500).send('Server Error');
+    }
+
 }
 
 //loadaproval name, email,loanamount, balance, 

@@ -7,10 +7,8 @@ const loanSchema = new mongoose.Schema({
     },
     amount: { type: Number, required: true },
     period: { type: Number, required: true },
-    interestRate: { type: Number, required: true },
     status: {
         type: String,
-        required: true,
         enum: ["pending", "approved", "rejected"],
         default: "pending",
     },
