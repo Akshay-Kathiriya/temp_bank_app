@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+
 const customerSchema = new mongoose.Schema({
     username: {
         type: String,
@@ -31,9 +32,9 @@ const customerSchema = new mongoose.Schema({
         type: Number,
         required: true,
         default: 0,
-    },
-   
+    }
 });
+
 const transactionSchema = new mongoose.Schema({
     type: { type: String, required: true },
     senderAccountNumber: { type: Number, required: true },
@@ -45,8 +46,6 @@ const transactionSchema = new mongoose.Schema({
     date: { type: Date, required: true, default: Date.now }
 });
 
-// module.exports = mongoose.model("Customer", customerSchema);
-// module.exports = mongoose.model("Transaction", transactionSchema);
-
 module.exports = mongoose.model("Customer", customerSchema);
-module.exports.Transaction = mongoose.model("Transaction", transactionSchema);
+
+module.exports = mongoose.model("Transaction", transactionSchema);
