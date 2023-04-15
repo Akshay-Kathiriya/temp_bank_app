@@ -9,8 +9,7 @@ exports.getDetails = async(req, res) => {
 
     try {
         console.log(req.params.id);
-        const account = await Customer.findOne({ _id: req.params.id })
-        console.log(account);
+        // const account = await Customer.findOne({ _id: req.params.id })
         return res.status(200)
             .json({
                 message: "Home Page",
@@ -31,10 +30,19 @@ exports.amountTransfer = async(req, res) => {
         } else {
             amountType = "creditAmount";
         }
+
+        console.log("userId:", req.userId);
+
         const senderAccountNumber = req.body.senderAccountNumber;
         const receiverAccountNumber = req.body.receiverAccountNumber;
+        const account = await Customer.findOne({ _id: req.userId });
+        if (account.accountNumber !== senderAccountNumber) {
+            throw new Error("Invalid Sender A/c Number!!");
+        }
+
         //Transaction insertion
         const transfer = new Transaction({
+            customer: req.userId,
             senderAccountNumber: senderAccountNumber,
             receiverAccountNumber: receiverAccountNumber,
             type: type,

@@ -34,6 +34,6 @@ router.post('/Login', authController.login);
 
 router.get('/:id', isAuth, customerController.getDetails);
 
-router.post('/tranferamount', isAuth, customerController.amountTransfer);
+router.post('/tranferamount/', isAuth, customerController.amountTransfer);
 
 module.exports = router;

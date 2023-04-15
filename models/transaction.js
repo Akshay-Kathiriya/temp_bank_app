@@ -1,5 +1,10 @@
 const mongoose = require("mongoose");
 const transactionSchema = new mongoose.Schema({
+    customer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Customer",
+        required: true,
+    },
     type: { type: String, required: true },
     senderAccountNumber: { type: Number, required: true },
     receiverAccountNumber: { type: Number, required: true },
