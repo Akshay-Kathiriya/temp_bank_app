@@ -112,17 +112,12 @@ exports.transactionDetails = async(req, res) => {
 }
 
 exports.loanrequest = async(req, res) => {
-
     try{
-    console.log(req.userId)
     const customerId = req.userId;
     const amount = req.body.amount;
     const period = req.body.period;
-    console.log(customerId);
 
-    
     const admin = await Admin.findOne();
-    // console.log(admin);
     if(!admin){
         throw new Error("No admin found.")
     }
