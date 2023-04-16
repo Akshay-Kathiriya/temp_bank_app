@@ -17,7 +17,6 @@ exports.getDetails = async(req, res) => {
         return res.status(500).send(err);
     }
 };
-
 exports.amountTransfer = async(req, res) => {
     try {
         const type = req.body.type;
@@ -79,84 +78,56 @@ exports.amountTransfer = async(req, res) => {
         await Customer.updateOne({ accountNumber: receiverAccountNumber }, { $set: { balance: receiverbalance } });
         await Customer.updateOne({ accountNumber: senderAccountNumber }, { $set: { balance: senderbalance } });
 
+
         res.status(200).send({ message: "Transfer successfull!!" });
     } catch (error) {
         console.log(error);
-        res
-            .status(500)
-            .send({ message: error.message || "Some internal error occurred !!" });
+        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
-};
-
+}
 exports.transactionDetails = async(req, res) => {
     try {
+        console.log("strart transactions.")
         const customer = req.userId;
+        console.log("customer id: ", customer);
         const transactions = await Transaction.find({ customer });
+        console.log("Transactions : ", transactions)
         if (!transactions) {
             throw new error("failed");
         }
         res.status(200).send(transactions);
     } catch (error) {
         console.log(error);
-        res
-            .status(500)
-            .send({ message: error.message || "Some internal error occurred !!" });
+        res.status(500).send({ message: error.message || "Some internal error occurred !!" })
     }
-};
+}
 
 exports.loanrequest = async(req, res) => {
     try {
         const customerId = req.userId;
         const amount = req.body.amount;
         const period = req.body.period;
-        exports.loanrequest = async(req, res) => {
-            try {
-                const customerId = req.userId;
-                const amount = req.body.amount;
-                const period = req.body.period;
 
-                const admin = await Admin.findOne();
-                if (!admin) {
-                    throw new Error("No admin found.")
-                }
-                const maxLoanAmount = admin.maxLoanAmount;
-                if (amount > maxLoanAmount) {
-                    throw new Error(`You can get maxLoanAmount upto ${maxLoanAmount}`)
-                }
-                const admin = await Admin.findOne();
-                if (!admin) {
-                    throw new Error("No admin found.");
-                }
-                const maxLoanAmount = admin.maxLoanAmount;
-                if (amount > maxLoanAmount) {
-                    throw new Error(`You can get maxLoanAmount upto ${maxLoanAmount}`);
-                }
-
-                const loanSchema = new Loan({
-                    customer: customerId,
-                    amount,
-                    period,
-                    admin: admin._id
-                });
-
-                const loanSchema = new Loan({
-                    customer: customerId,
-                    amount,
-                    period,
-                    admin: admin._id,
-                });
-
-                await loanSchema.save();
-                res.send("Loan is requested.");
-            } catch (err) {
-                res.status(500).send({ message: err.message || "Some internal error occurred !!" });
-            }
+        const admin = await Admin.findOne();
+        if (!admin) {
+            throw new Error("No admin found.")
         }
+        const maxLoanAmount = admin.maxLoanAmount;
+        if (amount > maxLoanAmount) {
+            throw new Error(`You can get maxLoanAmount upto ${maxLoanAmount}`)
+        }
+
+        const loanSchema = new Loan({
+            customer: customerId,
+            amount,
+            period,
+            admin: admin._id
+        });
+
+
         await loanSchema.save();
         res.send("Loan is requested.");
     } catch (err) {
-        res
-            .status(500)
-            .send({ message: err.message || "Some internal error occurred !!" });
+        res.status(500).send({ message: err.message || "Some internal error occurred !!" });
     }
-};
+}
