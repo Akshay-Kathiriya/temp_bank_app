@@ -63,12 +63,16 @@ exports.isapprove = async(req, res) => {
         if (isapproved === 'approved') {
             //reflet loan amount in customer schema
             const id = new ObjectId(customerId).toString();
+            console.log(id)
             let customerDetails = await Customer.findById({ _id: id });
             // console.log(customerDetails);
-            const loanAmount = await Loan.findOne({ customer: id })
+            const loanDetails = await Loan.findOne({ customer: id })
                 // console.log(loanAmount);
+            if(!customerDetails) throw new Error("Fetching customer details failed.");
+            if(!loanDetails) throw new Error("Fetching Loan Details failed");
+
             let balance = customerDetails.balance
-            balance += loanAmount.amount;
+            balance += loanDetails.amount;
             // console.log(balance)
             await Customer.updateOne({ _id: id }, { $set: { balance } })
                 // let customerDetails1 = await Customer.findById({ _id: id });
@@ -80,7 +84,7 @@ exports.isapprove = async(req, res) => {
                 senderAccountNumber: 9999,
                 receiverAccountNumber: customerDetails.accountNumber,
                 amount: {
-                    ["debitAmount"]: loanAmount.amount,
+                    ["debitAmount"]: loanDetails.amount,
                 },
                 date: Date.now()
             })
@@ -103,7 +107,7 @@ exports.isapprove = async(req, res) => {
      
     } catch (err) {
         console.log(err);
-        res.status(500).send("Server Error");
+        res.status(500).send(err.message);
     }
 };
 
@@ -118,6 +122,15 @@ exports.setMaxLoanAmount = async (req, res)=>{
         res.send("Failed.")
     }
     res.send("successfully updated maxLoanAmount");
+}
+
+exports.getAllTransaction = async (req, res)=>{
+    try{
+        const transactions = await Transaction.find();
+        res.send(transactions);
+    }catch(err){
+        res.send(err);
+    }
 }
 
 //loadaproval name, email,loanamount, balance,

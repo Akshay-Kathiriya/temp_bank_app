@@ -10,8 +10,8 @@ exports.getDetails = async(req, res) => {
     // if (!req.params.customer) res.status(400).send('Invalid User')
 
     try {
-        console.log(req.params.id);
-        // const account = await Customer.findOne({ _id: req.params.id })
+        console.log(req.userId);
+        const account = await Customer.findOne({ _id: req.userId })
         return res.status(200)
             .json({
                 message: "Home Page",
@@ -96,10 +96,11 @@ exports.amountTransfer = async(req, res) => {
 }
 exports.transactionDetails = async(req, res) => {
     try {
+        console.log("strart transactions.")
         const customer = req.userId;
-        console.log(customer);
+        console.log("customer id: " ,customer);
         const transactions = await Transaction.find({ customer });
-        console.log(transactions)
+        console.log("Transactions : ",transactions)
         if (!transactions) {
             throw new error("failed");
         }
@@ -111,27 +112,36 @@ exports.transactionDetails = async(req, res) => {
 }
 
 exports.loanrequest = async(req, res) => {
+
+    try{
     console.log(req.userId)
     const customerId = req.userId;
     const amount = req.body.amount;
     const period = req.body.period;
     console.log(customerId);
 
+    
     const admin = await Admin.findOne();
     // console.log(admin);
-
+    if(!admin){
+        throw new Error("No admin found.")
+    }
     const maxLoanAmount = admin.maxLoanAmount;
     if (amount > maxLoanAmount) {
-        res.send(`You can get maxLoanAmount upto ${maxLoanAmount}`)
+        throw new Error(`You can get maxLoanAmount upto ${maxLoanAmount}`)
     }
 
     const loanSchema = new Loan({
         customer: customerId,
         amount,
-        period
+        period,
+        admin:admin._id
     });
 
 
     await loanSchema.save();
     res.send("Loan is requested.");
+}  catch(err){
+    res.status(500).send({ message: err.message || "Some internal error occurred !!" });
+}
 }
