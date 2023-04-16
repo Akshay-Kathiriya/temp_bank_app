@@ -13,4 +13,4 @@ const loanSchema = new mongoose.Schema({
         default: "pending",
     },
 });
-module.exports = mongoose.model("loan", loanSchema);
+module.exports = mongoose.model("Loan", loanSchema);

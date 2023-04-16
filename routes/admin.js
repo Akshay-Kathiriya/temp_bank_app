@@ -15,4 +15,6 @@ router.get('/getCustomerDetails', isAuth, adminController.getCustomerDetails);
 router.get('/total', isAuth, adminController.totalAmount);
 router.get('/loanrequest', isAuth, adminController.loanrequest);
 router.post('/isapproved/', isAuth, adminController.isapprove);
+router.post('/setMaxLoanAmount', isAuth, adminController.setMaxLoanAmount);
+
 module.exports = router;

@@ -6,8 +6,8 @@ const path = require("path");
 require("dotenv").config();
 const Customer = require("../models/customer");
 const secretKey = process.env.TOKEN_SECRET_KEY;
-const loan = require("../models/loan");
-const Transaction = require("../models/customer");
+const Loan = require("../models/loan");
+const Transaction = require("../models/transaction");
 const ObjectId = require("mongodb").ObjectId;
 exports.getCustomerDetails = async(req, res) => {
     try {
@@ -42,7 +42,7 @@ exports.totalAmount = async(req, res) => {
 };
 exports.loanrequest = async(req, res) => {
     try {
-        const loanDetails = await loan.find();
+        const loanDetails = await Loan.find();
         res.status(200).send(loanDetails);
     } catch (err) {
         console.log(err);
@@ -65,7 +65,7 @@ exports.isapprove = async(req, res) => {
             const id = new ObjectId(customerId).toString();
             let customerDetails = await Customer.findById({ _id: id });
             // console.log(customerDetails);
-            const loanAmount = await loan.findOne({ customer: id })
+            const loanAmount = await Loan.findOne({ customer: id })
                 // console.log(loanAmount);
             let balance = customerDetails.balance
             balance += loanAmount.amount;
@@ -75,32 +75,50 @@ exports.isapprove = async(req, res) => {
                 // console.log(customerDetails1);
                 //update transactions
             const transaction = new Transaction({
+                customer:req.userId,
                 type: 'Loan',
-                senderAccountNumber: 0,
+                senderAccountNumber: 9999,
                 receiverAccountNumber: customerDetails.accountNumber,
-                amount: [{
-                    debitAmount: loanAmount,
-                }],
+                amount: {
+                    ["debitAmount"]: loanAmount.amount,
+                },
                 date: Date.now()
             })
+            // console.log(transaction)
+            // console.log("------------------------------------------")
             await transaction.save();
-            console.log("after transaction")
-                //reject
-                //
-            let updateLoanDetails;
-            if (isapproved === "approved") {
-                updateLoanDetails = await loan.updateOne({ customer: customerId }, { $set: newDetails });
-            } else {}
+          
+            // console.log("after transaction")
+           
+         
+              const updateLoanDetails = await Loan.updateOne({ customer: customerId }, { $set: newDetails });
+    
             if (!updateLoanDetails) {
                 res.send("Failed");
             }
-        } else {}
-        res.send("Updated.");
+            res.send("loan approved.");
+        } else{
+            res.send("loan rejected.")
+        }
+     
     } catch (err) {
         console.log(err);
         res.status(500).send("Server Error");
     }
 };
+
+exports.setMaxLoanAmount = async (req, res)=>{
+    const maxLoanAmount = req.body.amount;
+    
+    const admin = await Admin.updateOne({},{$set:{maxLoanAmount}});
+    console.log(admin);
+    const admintemp = await Admin.find();
+    console.log(admintemp)
+    if(!admin){
+        res.send("Failed.")
+    }
+    res.send("successfully updated maxLoanAmount");
+}
 
 //loadaproval name, email,loanamount, balance,
 // http://local.../loanrequst

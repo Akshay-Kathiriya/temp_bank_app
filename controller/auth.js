@@ -20,7 +20,7 @@ exports.Admin_signup = async(req, res, next) => {
     const email = req.body.email;
     const name = req.body.name;
     const password = req.body.password;
-    const TotalAmount = 1000000;
+    const maxLoanAmount = 1000000;
     try {
         const hashedPW = await bcrypt
             .hash(password, 12)
@@ -29,7 +29,7 @@ exports.Admin_signup = async(req, res, next) => {
             email: email,
             password: hashedPW,
             name: name,
-            TotalAmount: TotalAmount
+            maxLoanAmount: maxLoanAmount
         });
         await admin.save();
 
@@ -51,7 +51,7 @@ exports.login = async(req, res, next) => {
     const email = req.body.email;
     const password = req.body.password;
     let user;
-    let loadUser;
+    let loadedUser;
     try {
 
         console.log(req.baseUrl)

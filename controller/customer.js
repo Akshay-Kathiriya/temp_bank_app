@@ -2,6 +2,8 @@ const { validationResult } = require('express-validator')
 const Customer = require('../models/customer.js');
 const Transaction = require('../models/transaction.js');
 const bcrypt = require('bcryptjs');
+const Admin = require('../models/admin.js')
+const Loan = require('../models/loan.js')
 
 exports.getDetails = async(req, res) => {
 
@@ -99,11 +101,21 @@ exports.loanrequest = async(req, res) => {
     const amount = req.body.amount;
     const period = req.body.period;
     console.log(customerId);
+    
+    const admin = await Admin.findOne();
+    // console.log(admin);
+
+    const maxLoanAmount = admin.maxLoanAmount;
+    if(amount>maxLoanAmount){
+        res.send(`You can get maxLoanAmount upto ${maxLoanAmount}`)
+    }
+    
     const loanSchema = new Loan({
         customer: customerId,
         amount,
         period
     });
+    
 
     await loanSchema.save();
     res.send("Loan is requested.");
