@@ -1,6 +1,5 @@
 const express = require("express");
 const bodyParser = require('body-parser');
-//const path = require('path');
 const adminRoutes = require('./routes/admin');
 const customerRoutes = require('./routes/customer');
 const mongoose = require('mongoose');
@@ -18,11 +17,9 @@ app.use((req, res, next) => {
     next();
 });
 
-//Change below routes:
+
 app.use('/bank/customer', customerRoutes);
 app.use('/bank/admin', adminRoutes);
-// app.use('/bank/transaction', );
-// app.use('/auth',authRoutes)
 
 
 app.use((error, req, res, next) => { //error handling middleware
