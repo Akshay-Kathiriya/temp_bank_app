@@ -94,6 +94,21 @@ exports.amountTransfer = async(req, res) => {
         res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
 }
+exports.transactionDetails = async(req, res) => {
+    try {
+        const customer = req.userId;
+        console.log(customer);
+        const transactions = await Transaction.find({ customer });
+        console.log(transactions)
+        if (!transactions) {
+            throw new error("failed");
+        }
+        res.status(200).send(transactions);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ message: error.message || "Some internal error occurred !!" })
+    }
+}
 
 exports.loanrequest = async(req, res) => {
     console.log(req.userId)
@@ -101,21 +116,21 @@ exports.loanrequest = async(req, res) => {
     const amount = req.body.amount;
     const period = req.body.period;
     console.log(customerId);
-    
+
     const admin = await Admin.findOne();
     // console.log(admin);
 
     const maxLoanAmount = admin.maxLoanAmount;
-    if(amount>maxLoanAmount){
+    if (amount > maxLoanAmount) {
         res.send(`You can get maxLoanAmount upto ${maxLoanAmount}`)
     }
-    
+
     const loanSchema = new Loan({
         customer: customerId,
         amount,
         period
     });
-    
+
 
     await loanSchema.save();
     res.send("Loan is requested.");
