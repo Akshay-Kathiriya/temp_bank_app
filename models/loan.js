@@ -12,5 +12,10 @@ const loanSchema = new mongoose.Schema({
         enum: ["pending", "approved", "rejected"],
         default: "pending",
     },
+    admin: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Admin",
+        required: true,
+    }
 });
 module.exports = mongoose.model("Loan", loanSchema);
