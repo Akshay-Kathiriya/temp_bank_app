@@ -22,17 +22,30 @@ router.post('/signup', [
     body('name').trim().not().isEmpty()
 ], authController.Admin_signup);
 
-router.post('/login', authController.login);
+router.post('/login', [
+    body('email')
+    .isEmail()
+    .withMessage('Please enter a valid email.')
+    .custom((value, { req }) => {
+        return Customer.findOne({ email: value }).then(userDoc => {
+            if (userDoc) {
+                return Promise.reject('E-mail address already exists! ')
+            }
+        })
+    })
+    .normalizeEmail(),
+    body('password').trim().isLength({ min: 3 })
+], authController.login);
 
 router.get('/getCustomerDetails', isAuth, adminController.getCustomerDetails);
 
 router.get('/total', isAuth, adminController.totalAmount);
 
-router.get('/loanrequest', isAuth, adminController.loanrequest);
+router.get('/loanRequest', isAuth, adminController.loanrequest);
 
-router.post('/isapproved/', isAuth, adminController.loanrequesthandler);
+router.post('/isApproved', isAuth, adminController.loanRequestHandler);
 
-router.post('/setMaxLoanAmount', isAuth, adminController.setMaxLoanAmount);
+router.post('/setMaxLoanAmount', [body('amount').isNumeric().withMessage('Amount must be numeric')], isAuth, adminController.setMaxLoanAmount);
 
 router.get('/allTransactions', isAuth, adminController.getAllTransaction);
 
