@@ -38,4 +38,6 @@ router.post('/loanrequest', isAuth, customerController.loanrequest);
 
 router.get('/transactions', isAuth, customerController.transactionDetails);
 
+router.get('/loanDetails', isAuth, customerController.loanDetails);
+
 module.exports = router;
