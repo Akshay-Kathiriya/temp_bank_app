@@ -4,7 +4,7 @@ const Customer = require("../models/customer");
 const Loan = require("../models/loan");
 const Transaction = require("../models/transaction");
 const ObjectId = require("mongodb").ObjectId;
-
+const mongoose = require('mongoose');
 //It will fetch all customer details from Customer
 exports.getCustomerDetails = async(req, res) => {
     try {
@@ -43,7 +43,9 @@ exports.loanrequest = async(req, res) => {
 };
 
 exports.loanRequestHandler = async(req, res) => {
+     const session = await mongoose.startSession();
     try {
+        session.startTransaction();
         const { id: customerId, loanid: loanId, status: isApproved } = req.body;
 
         if (!customerId || !loanId || !isApproved) {
@@ -62,38 +64,48 @@ exports.loanRequestHandler = async(req, res) => {
 
         if (isApproved === "approved") {
             const newBalance = customer.balance + loan.amount;
-            await Customer.updateOne({ _id: customerId }, { $set: { balance: newBalance } });
-
+            await Customer.updateOne({ _id: customerId }, { $set: { balance: newBalance } }, {session});
             const transaction = new Transaction({
                 customer: req.userId,
-                type: "Loan",
-                senderAccountNumber: 9999,
-                receiverAccountNumber: customer.accountNumber,
-                amount: { debitAmount: loan.amount },
+                type: "loanDebit",
+                AccountNumber: customer.accountNumber,
+                amount:  loan.amount ,
                 date: Date.now(),
             });
-            await transaction.save();
+            await transaction.save({session});
 
-            const updatedLoan = await Loan.findByIdAndUpdate(loanId, {
+            const endDate = Date.now() + loan.period;
+            const updatedLoan = await Loan.updateOne({_id:loanId}, {
                 status: isApproved,
-            });
-            if (!updatedLoan) {
+                startDate: Date.now(),
+                endDate
+            },{session});
+            if (updatedLoan.modifiedCount!=1) {
+                await session.abortTransaction();
+                session.endSession();
                 return res.status(500).send("Failed to update loan status");
             }
 
+            await session.commitTransaction();
+            session.endSession();
             return res.send("Loan approved");
         } else {
-            const updatedLoan = await Loan.findByIdAndUpdate(loanId, {
+            const updatedLoan = await Loan.updateOne({_id:loanId}, {
                 status: isApproved,
-            });
+            }, {session});
             if (!updatedLoan) {
+                await session.abortTransaction();
+                session.endSession();
                 return res.status(500).send("Failed to update loan status");
             }
-
+            await session.commitTransaction();
+            session.endSession();
             return res.send("Loan rejected");
         }
     } catch (error) {
         console.error(error);
+        await session.abortTransaction();
+        session.endSession();
         res.status(500).send("Internal Server Error");
     }
 };
@@ -122,3 +134,4 @@ exports.getAllTransaction = async(req, res) => {
         res.send(err);
     }
 };
+
