@@ -94,32 +94,33 @@ exports.login = async(req, res, next) => {
 
 
 exports.Customer_signup = async(req, res, next) => {
-    function generateAccountNumber() {
-        const num = Math.floor(Math.random() * 1000000000000);
-        return num;
-    }
-    const accountNumber = generateAccountNumber()
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const error = new Error('Validation failed.');
-        error.statusCode = 422;
-        error.data = errors.array();
-        throw error;
-    }
-    let userToCreate = {
-        accountNumber: accountNumber,
-        balance: req.body.balance || 0,
-        username: req.body.username,
-        email: req.body.email,
-        phone_no: req.body.phone_no,
-        address: req.body.address,
-        password: req.body.password
-    }
-    const userExistsAlready = await Customer.find({ email: userToCreate.email })
-    if (userExistsAlready.length > 0) {
-        return res.status(401).json({ msg: 'E-mail already exist' })
-    }
     try {
+
+        function generateAccountNumber() {
+            const num = Math.floor(Math.random() * 1000000000000);
+            return num;
+        }
+        const accountNumber = generateAccountNumber()
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const error = new Error('Validation failed.');
+            error.statusCode = 422;
+            error.data = errors.array();
+            throw error;
+        }
+        let userToCreate = {
+            accountNumber: accountNumber,
+            balance: req.body.balance || 0,
+            username: req.body.username,
+            email: req.body.email,
+            phone_no: req.body.phone_no,
+            address: req.body.address,
+            password: req.body.password
+        }
+        const userExistsAlready = await Customer.find({ email: userToCreate.email })
+        if (userExistsAlready.length > 0) {
+            return res.status(401).json({ msg: 'E-mail already exist' })
+        }
         const hashedPw = await bcrypt
             .hash(userToCreate.password, 12)
 

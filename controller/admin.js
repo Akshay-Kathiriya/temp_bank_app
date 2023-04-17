@@ -4,8 +4,7 @@ const Customer = require("../models/customer");
 const Loan = require("../models/loan");
 const Transaction = require("../models/transaction");
 const ObjectId = require("mongodb").ObjectId;
-
-//It will fetch all customer details from Customer 
+//It will fetch all customer details from Customer
 exports.getCustomerDetails = async(req, res) => {
     try {
         const details = await Customer.find();
@@ -16,6 +15,7 @@ exports.getCustomerDetails = async(req, res) => {
     }
 };
 
+//calculate total amount of all customer
 //calculate total amount of all customer
 exports.totalAmount = async(req, res) => {
     try {
@@ -32,6 +32,7 @@ exports.totalAmount = async(req, res) => {
 };
 
 //Fetch all loan request from loan table.
+//Fetch all loan request from loan table.
 exports.loanrequest = async(req, res) => {
     try {
         const loanDetails = await Loan.find();
@@ -41,34 +42,26 @@ exports.loanrequest = async(req, res) => {
         res.status(500).send("Server Error");
     }
 };
-
-
 exports.loanrequesthandler = async(req, res) => {
     try {
         const customerId = req.body.id;
+        const loanId = req.body.loanid;
         const isapproved = req.body.status;
-
         const newDetails = {
             status: isapproved,
         };
-
-
         if (isapproved === 'approved') {
-
             //reflet loan amount in customer schema
             const id = new ObjectId(customerId).toString();
-
+            const loan = new ObjectId(loanId).toString();
             let customerDetails = await Customer.findById({ _id: id });
-            const loanDetails = await Loan.findOne({ customer: id })
-
+            const loanDetails = await Loan.findOne({ _id: loan })
             if (!customerDetails) throw new Error("Fetching customer details failed.");
             if (!loanDetails) throw new Error("Fetching Loan Details failed");
-
             let balance = customerDetails.balance
             balance += loanDetails.amount;
             await Customer.updateOne({ _id: id }, { $set: { balance } })
-
-            //update transactions
+                //update transactions
             const transaction = new Transaction({
                 customer: req.userId,
                 type: 'Loan',
@@ -80,10 +73,7 @@ exports.loanrequesthandler = async(req, res) => {
                 date: Date.now()
             })
             await transaction.save();
-
-
-            const updateLoanDetails = await Loan.updateOne({ customer: customerId }, { $set: newDetails });
-
+            const updateLoanDetails = await Loan.updateOne({ _id: loan }, { $set: newDetails });
             if (!updateLoanDetails) {
                 res.send("Update LoanDetails Failed");
             }
@@ -91,7 +81,6 @@ exports.loanrequesthandler = async(req, res) => {
         } else {
             res.send("loan rejected.")
         }
-
     } catch (err) {
         console.log(err);
         res.status(500).send(err.message);
@@ -99,17 +88,27 @@ exports.loanrequesthandler = async(req, res) => {
 };
 
 exports.setMaxLoanAmount = async(req, res) => {
-    const maxLoanAmount = req.body.amount;
-    const admin = await Admin.updateOne({}, { $set: { maxLoanAmount } });
-    console.log(admin);
-    const admintemp = await Admin.find();
-    console.log(admintemp)
-    if (!admin) {
-        res.send("Failed.")
-    }
-    res.send("successfully updated maxLoanAmount");
-};
+    exports.setMaxLoanAmount = async(req, res) => {
+        const maxLoanAmount = req.body.amount;
+        const admin = await Admin.updateOne({}, { $set: { maxLoanAmount } });
+        console.log(admin);
+        const admintemp = await Admin.find();
+        console.log(admintemp)
+        if (!admin) {
+            res.send("Failed.")
+        }
+        res.send("successfully updated maxLoanAmount");
+    };
 
+    exports.getAllTransaction = async(req, res) => {
+        try {
+            const transactions = await Transaction.find();
+            res.send(transactions);
+        } catch (err) {
+            res.send(err);
+        }
+    };
+};
 exports.getAllTransaction = async(req, res) => {
     try {
         const transactions = await Transaction.find();
