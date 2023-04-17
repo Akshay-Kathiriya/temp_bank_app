@@ -16,6 +16,8 @@ const loanSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Admin",
         required: true,
-    }
+    },
+    startDate: { type: Date, default: Date.now },
+    endDate: { type: Date }
 });
 module.exports = mongoose.model("Loan", loanSchema);

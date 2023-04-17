@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const adminRoutes = require('./routes/admin');
 const customerRoutes = require('./routes/customer');
 const mongoose = require('mongoose');
+const error = require('./controller/error'); //used to deal with page not found
+
 require('dotenv').config();
 
 const app = express();
@@ -20,6 +22,7 @@ app.use((req, res, next) => {
 
 app.use('/bank/customer', customerRoutes);
 app.use('/bank/admin', adminRoutes);
+app.use("/", error.get404);
 
 
 app.use((error, req, res, next) => { //error handling middleware

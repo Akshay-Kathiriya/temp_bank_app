@@ -9,6 +9,12 @@ const customerSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    role: {
+        type: String,
+        required: true,
+        enum: ["Customer"],
+        default: "Customer"
+    },
     phone_no: {
         type: Number,
         required: true,

@@ -23,7 +23,7 @@ exports.Admin_signup = async(req, res, next) => {
             error.data = errors.array();
             throw error;
         }
-        
+
         const hashedPW = await bcrypt
             .hash(password, 12)
 
@@ -47,61 +47,51 @@ exports.Admin_signup = async(req, res, next) => {
     };
 }
 
-
 exports.login = async(req, res, next) => {
-
     const email = req.body.email;
     const password = req.body.password;
     let user;
     let loadedUser;
     try {
-
         if (req.baseUrl == '/bank/admin') {
-            user = await Admin.findOne({ email: email })
+            user = await Admin.findOne({ email: email });
         } else {
-            user = await Customer.findOne({ email: email })
+            user = await Customer.findOne({ email: email });
         }
-
         if (!user) {
             const error = new Error('A User with email could not be found');
             error.statuCode = 401;
             throw error;
         }
         loadedUser = user;
-
         const isEqual = await bcrypt.compare(password, user.password);
-
         if (!isEqual) {
             const error = new Error('Wrong password');
             error.statusCode = 401;
             throw error;
         }
-
-        //this will create an new signature and packs into a new jwt
+        // Create a JWT token with the user's role
         const token = jwt.sign({
             email: loadedUser.email,
-            userId: loadedUser._id.toString()
+            userId: loadedUser._id.toString(),
+            role: loadedUser.role
         }, secretKey, { expiresIn: '1h' });
-
         res.status(200)
             .json({
                 message: "Login sucessful",
                 token: token,
-                userId: loadedUser._id.toString()
-            })
-
+                userId: loadedUser._id.toString(),
+                role: loadedUser.role
+            });
     } catch (err) {
         if (!err.statuCode) {
             err.statuCode = 500;
         }
-        console.log(err)
-        next(err); //now eeror will go to next error handling middleware
-
+        console.log(err);
+        next(err);
     }
-
-}
-
-
+};
+///customer login->create account number->Switch account
 exports.Customer_signup = async(req, res, next) => {
     try {
 
