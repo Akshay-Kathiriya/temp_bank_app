@@ -19,17 +19,16 @@ exports.getDetails = async(req, res) => {
 };
 
 
-
 exports.amountTransfer = async(req, res) => {
     try {
         const { type, senderAccountNumber, receiverAccountNumber, amount } = req.body;
         const statustype = type === "debit" ? "credit" : "debit";
         const amountType = type === "debit" ? "debitAmount" : "creditAmount";
 
-        const account = await Customer.findOne({ _id: req.userId });
-        const rAccount = await Customer.findOne({ accountNumber: receiverAccountNumber });
+        const senderAccount = await Customer.findOne({ _id: req.userId });
+        const receiverAccount = await Customer.findOne({ accountNumber: receiverAccountNumber });
 
-        if (account.accountNumber !== senderAccountNumber) {
+        if (senderAccount.accountNumber !== senderAccountNumber) {
             throw new Error("Invalid Sender A/c Number!!");
         }
 
@@ -47,7 +46,7 @@ exports.amountTransfer = async(req, res) => {
 
         // Insert transaction for receiver
         const transferAtrec = new Transaction({
-            customer: rAccount._id,
+            customer: receiverAccount._id,
             senderAccountNumber,
             receiverAccountNumber,
             type: statustype,
@@ -58,8 +57,6 @@ exports.amountTransfer = async(req, res) => {
         await transferAtrec.save();
 
         // Update sender and receiver balances
-        const receiverAccount = await Customer.findOne({ accountNumber: receiverAccountNumber });
-        const senderAccount = await Customer.findOne({ accountNumber: senderAccountNumber });
 
         if (!receiverAccount || !senderAccount) {
             throw new Error("Could not find account");

@@ -4,14 +4,14 @@ const adminController = require('../controller/admin')
 const authController = require('../controller/auth')
 const router = express.Router();
 const isAuth = require('../middleware/is-auth');
-
+const Admin = require('../models/admin');
 
 router.post('/signup', [
     body('email')
     .isEmail()
     .withMessage('Please enter a valid email.')
     .custom((value, { req }) => {
-        return Customer.findOne({ email: value }).then(userDoc => {
+        return Admin.findOne({ email: value }).then(userDoc => {
             if (userDoc) {
                 return Promise.reject('E-mail address already exists! ')
             }
@@ -27,13 +27,12 @@ router.post('/login', [
     .isEmail()
     .withMessage('Please enter a valid email.')
     .custom((value, { req }) => {
-        return Customer.findOne({ email: value }).then(userDoc => {
+        return Admin.findOne({ email: value }).then(userDoc => {
             if (userDoc) {
                 return Promise.reject('E-mail address already exists! ')
             }
         })
-    })
-    .normalizeEmail(),
+    }),
     body('password').trim().isLength({ min: 3 })
 ], authController.login);
 

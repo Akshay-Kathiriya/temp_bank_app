@@ -2,7 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const customerController = require('../controller/customer')
 const authController = require('../controller/auth')
-
+const Customer = require('../models/customer');
 const User = require('../models/customer');
 const router = express.Router();
 const isAuth = require('../middleware/is-auth');
@@ -28,7 +28,12 @@ router.post('/signup', [
     authController.Customer_signup);
 
 
-router.post('/Login', authController.login);
+router.post('/Login',[
+    body('email')
+    .isEmail()
+    .withMessage('Please enter a valid email.'),
+    body('password').trim().isLength({ min: 3 })
+], authController.login);
 
 router.get('/getDetails', isAuth, customerController.getDetails);
 

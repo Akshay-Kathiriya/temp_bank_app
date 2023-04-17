@@ -15,6 +15,15 @@ exports.Admin_signup = async(req, res, next) => {
     const password = req.body.password;
     const maxLoanAmount = 1000000;
     try {
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const error = new Error('Validation failed.');
+            error.statusCode = 422;
+            error.data = errors.array();
+            throw error;
+        }
+        
         const hashedPW = await bcrypt
             .hash(password, 12)
 
