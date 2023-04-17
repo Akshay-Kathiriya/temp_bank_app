@@ -42,51 +42,6 @@ exports.loanrequest = async(req, res) => {
     }
 };
 
-// exports.loanrequesthandler = async(req, res) => {
-//     try {
-//         const customerId = req.body.id;
-//         const loanId = req.body.loanid;
-//         const isapproved = req.body.status;
-//         const newDetails = {
-//             status: isapproved,
-//         };
-//         if (isapproved === 'approved') {
-//             //reflet loan amount in customer schema
-//             const id = new ObjectId(customerId).toString();
-//             const loan = new ObjectId(loanId).toString();
-//             let customerDetails = await Customer.findById({ _id: id });
-//             const loanDetails = await Loan.findOne({ _id: loan })
-//             if (!customerDetails) throw new Error("Fetching customer details failed.");
-//             if (!loanDetails) throw new Error("Fetching Loan Details failed");
-//             let balance = customerDetails.balance
-//             balance += loanDetails.amount;
-//             await Customer.updateOne({ _id: id }, { $set: { balance } })
-//                 //update transactions
-//             const transaction = new Transaction({
-//                 customer: req.userId,
-//                 type: 'Loan',
-//                 senderAccountNumber: 9999,
-//                 receiverAccountNumber: customerDetails.accountNumber,
-//                 amount: {
-//                     ["debitAmount"]: loanDetails.amount,
-//                 },
-//                 date: Date.now()
-//             })
-//             await transaction.save();
-//             const updateLoanDetails = await Loan.updateOne({ _id: loan }, { $set: newDetails });
-//             if (!updateLoanDetails) {
-//                 res.send("Update LoanDetails Failed");
-//             }
-//             res.send("loan approved.");
-//         } else {
-//             res.send("loan rejected.")
-//         }
-//     } catch (err) {
-//         console.log(err);
-//         res.status(500).send(err.message);
-//     }
-// };
-
 exports.loanRequestHandler = async(req, res) => {
     try {
         const { id: customerId, loanid: loanId, status: isApproved } = req.body;
@@ -141,64 +96,6 @@ exports.loanRequestHandler = async(req, res) => {
         console.error(error);
         res.status(500).send("Internal Server Error");
     }
-<<<<<<< Updated upstream
-=======
-
-    const customer = await Customer.findById(customerId);
-    if (!customer) {
-      return res.status(404).send("Customer not found");
-    }
-
-    const loan = await Loan.findById(loanId);
-    if (!loan) {
-      return res.status(404).send("Loan not found");
-    }
-
-    if (isApproved === "approved") {
-
-      if (loan.status === "approved") {
-        return res.status(404).send("Loan is already approved.");
-      }
-      
-      const newBalance = customer.balance + loan.amount;
-      await Customer.updateOne(
-        { _id: customerId },
-        { $set: { balance: newBalance } }
-      );
-
-      const transaction = new Transaction({
-        customer: req.userId,
-        type: "Loan",
-        senderAccountNumber: 9999,
-        receiverAccountNumber: customer.accountNumber,
-        amount: { debitAmount: loan.amount },
-        date: Date.now(),
-      });
-      await transaction.save();
-
-      const updatedLoan = await Loan.findByIdAndUpdate(loanId, {
-        status: isApproved,
-      });
-      if (!updatedLoan) {
-        return res.status(500).send("Failed to update loan status");
-      }
-
-      return res.send("Loan approved");
-    } else {
-      const updatedLoan = await Loan.findByIdAndUpdate(loanId, {
-        status: isApproved,
-      });
-      if (!updatedLoan) {
-        return res.status(500).send("Failed to update loan status");
-      }
-
-      return res.send("Loan rejected");
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
-  }
->>>>>>> Stashed changes
 };
 
 exports.setMaxLoanAmount = async(req, res) => {
