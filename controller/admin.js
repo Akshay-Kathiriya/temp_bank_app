@@ -41,6 +41,7 @@ exports.loanrequest = async(req, res) => {
         res.status(500).send("Server Error");
     }
 };
+
 // exports.loanrequesthandler = async(req, res) => {
 //     try {
 //         const customerId = req.body.id;
@@ -140,6 +141,64 @@ exports.loanRequestHandler = async(req, res) => {
         console.error(error);
         res.status(500).send("Internal Server Error");
     }
+<<<<<<< Updated upstream
+=======
+
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return res.status(404).send("Customer not found");
+    }
+
+    const loan = await Loan.findById(loanId);
+    if (!loan) {
+      return res.status(404).send("Loan not found");
+    }
+
+    if (isApproved === "approved") {
+
+      if (loan.status === "approved") {
+        return res.status(404).send("Loan is already approved.");
+      }
+      
+      const newBalance = customer.balance + loan.amount;
+      await Customer.updateOne(
+        { _id: customerId },
+        { $set: { balance: newBalance } }
+      );
+
+      const transaction = new Transaction({
+        customer: req.userId,
+        type: "Loan",
+        senderAccountNumber: 9999,
+        receiverAccountNumber: customer.accountNumber,
+        amount: { debitAmount: loan.amount },
+        date: Date.now(),
+      });
+      await transaction.save();
+
+      const updatedLoan = await Loan.findByIdAndUpdate(loanId, {
+        status: isApproved,
+      });
+      if (!updatedLoan) {
+        return res.status(500).send("Failed to update loan status");
+      }
+
+      return res.send("Loan approved");
+    } else {
+      const updatedLoan = await Loan.findByIdAndUpdate(loanId, {
+        status: isApproved,
+      });
+      if (!updatedLoan) {
+        return res.status(500).send("Failed to update loan status");
+      }
+
+      return res.send("Loan rejected");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
+>>>>>>> Stashed changes
 };
 
 exports.setMaxLoanAmount = async(req, res) => {
