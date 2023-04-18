@@ -99,6 +99,8 @@ exports.loanDetails = async(req, res) => {
         const loanTransactions = await Loan.find({ customer });
         if (!loanTransactions) {
             throw new error("There is no loan");
+            //    res.status(200).send("loanTransactions");
+
         }
         res.status(200).send(loanTransactions);
     } catch (error) {
