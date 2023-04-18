@@ -3,7 +3,7 @@ const { body } = require('express-validator');
 const customerController = require('../controller/customer')
 const authController = require('../controller/auth')
 const Customer = require('../models/customer');
-const User = require('../models/customer');
+const Account = require('../models/account')
 const router = express.Router();
 const isAuth = require('../middleware/is-auth');
 
@@ -36,6 +36,8 @@ router.post('/Login', [
 ], authController.login);
 
 router.get('/getDetails', isAuth('Customer'), customerController.getDetails);
+
+router.post('/createDetails', isAuth('Customer'), customerController.createAccount);
 
 router.post('/tranferamount', isAuth('Customer'), customerController.amountTransfer);
 

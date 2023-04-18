@@ -129,9 +129,9 @@ exports.Customer_signup = async(req, res, next) => {
             password: hashedPw,
             username: userToCreate.username,
             address: userToCreate.address,
-            accountNumber: accountNumber,
+            //accountNumber: accountNumber,
             phone_no: userToCreate.phone_no,
-            balance: userToCreate.balance
+            //balance: userToCreate.balance
 
         });
         await user.save();

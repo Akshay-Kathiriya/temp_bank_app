@@ -1,77 +1,130 @@
 const { validationResult } = require("express-validator");
 const Customer = require("../models/customer.js");
-const Transaction = require("../models/transaction.js");
+const Transaction = require("../models/transaction");
+const Account = require("../models/account");
+
 const bcrypt = require("bcryptjs");
-const Admin = require("../models/admin.js");
-const Loan = require("../models/loan.js");
+const Admin = require("../models/admin");
+const Loan = require("../models/loan");
 
 exports.getDetails = async(req, res) => {
     try {
         console.log(req.userId);
-        const account = await Customer.findOne({ _id: req.userId });
+        const customerDetails = await Customer.findOne({ _id: req.userId });
         return res.status(200).json({
             message: "Home Page",
-            account: account,
+            customerDetails: customerDetails,
         });
     } catch (err) {
         return res.status(500).send(err);
     }
 };
 
-exports.amountTransfer = async(req, res) => {
+exports.createAccount = async(req, res, next) => {
     try {
-        const { type, senderAccountNumber, receiverAccountNumber, amount } = req.body;
-        const statustype = type === "debit" ? "credit" : "debit";
-        const amountType = type === "debit" ? "debitAmount" : "creditAmount";
+        function generateAccountNumber() {
+            const num = Math.floor(Math.random() * 1000000000000);
+            return num;
+        }
+        const accountNumber = generateAccountNumber();
+        const balance = req.body.balance;
 
-        const senderAccount = await Customer.findOne({ _id: req.userId });
-        const receiverAccount = await Customer.findOne({ accountNumber: receiverAccountNumber });
+        const customerAccount = new Account({
+            customer: req.userId,
+            accountNumber,
+            balance
+        });
+        await customerAccount.save();
 
-        if (senderAccount.accountNumber !== senderAccountNumber) {
-            throw new Error("Invalid Sender A/c Number!!");
+        res.status(201).json({
+            message: 'Account created!',
+        })
+    } catch (err) {
+        if (!err.statuCode) {
+            err.statuCode = 500;
+        }
+        next(err);
+    }
+
+};
+
+exports.amountTransfer = async(req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        const { accountId, accountNumber, amount } = req.body;
+        // const statustype = type === "debit" ? "credit" : "debit";
+        // const amountType = type === "debit" ? "debitAmount" : "creditAmount";
+
+        // const senderAccount = await Customer.findOne({ _id: req.userId });
+        const receiverAccount = await Account.findOne({ accountNumber }, null, { session });
+
+        if (!receiverAccount) {
+            return res.status(200).send("Account not found.")
         }
 
-        if (!receiverAccount || !senderAccount) {
-            throw new Error("Could not find account");
+        const senderAccount = await Account.findOne({ _id: accountId }, null, { session });
+
+        if (!senderAccount) {
+            return res.status(200).send("Account not found.")
         }
+
         // Insert transaction
         const transfer = new Transaction({
             customer: req.userId,
-            senderAccountNumber,
-            receiverAccountNumber,
-            type,
-            amount: {
-                [amountType]: amount,
-            },
+            type: "credit",
+            AccountNumber: accountNumber,
+            amount,
         });
-        await transfer.save();
-
+        const transferDetails = await transfer.save({ session });
+        if (!transferDetails) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(500).send("Failed to create transfer at sender side and should be aborted.");
+        }
         // Insert transaction for receiver
-        const transferAtrec = new Transaction({
+        const transferAtReceiver = new Transaction({
             customer: receiverAccount._id,
-            senderAccountNumber,
-            receiverAccountNumber,
-            type: statustype,
-            amount: {
-                [amountType === "debitAmount" ? "creditAmount" : "debitAmount"]: amount,
-            },
+            type: "debit",
+            AccountNumber: senderAccount.accountNumber,
+            amount,
         });
-        await transferAtrec.save();
-
+        const rtransferDetails = await transferAtReceiver.save({ session });
+        if (!rtransferDetails) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(500).send("Failed to create transfer at receiver and should be aborted.");
+        }
         // Update sender and receiver balances
-
         const senderBalanceAfterTransfer = senderAccount.balance - amount;
         if (senderBalanceAfterTransfer < 0) {
-            throw new Error("The account does not have sufficient balance");
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(201).send("The account does not have sufficient balance");
         }
 
-        await Customer.updateOne({ accountNumber: receiverAccountNumber }, { $inc: { balance: amount } });
-        await Customer.updateOne({ accountNumber: senderAccountNumber }, { $inc: { balance: -amount } });
+        const accountUpdateAtReceiver = await Account.updateOne({ accountNumber: accountNumber }, { $inc: { balance: amount } }, { session });
+        if (accountUpdate.modifiedCount !== 1) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(500).send("Failed to update account at receiver  and should be aborted.");
+        }
 
-        res.status(200).send({ message: "Transfer successful!!" });
+        const accountUpdateAtSender = await Account.updateOne({ accountNumber: senderAccount.accountNumber }, { $inc: { balance: -amount } }, { session });
+        if (accountUpdateAtSender.modifiedCount !== 1) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(500).send("Failed to update account at sender  and should be aborted.");
+        }
+
+        await session.commitTransaction();
+        session.endSession();
+        return res.status(200).send({ message: "Transfer successful!!" });
     } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: "Some internal error occurred !!" });
+        console.error(error);
+        await session.abortTransaction();
+        session.endSession();
+        res.status(500).send("Internal Server Error");
     }
 };
 
