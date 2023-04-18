@@ -44,20 +44,21 @@ exports.loanrequest = async(req, res) => {
 
 exports.loanRequestHandler = async(req, res) => {
      const session = await mongoose.startSession();
+     session.startTransaction();
     try {
-        session.startTransaction();
+        
         const { id: customerId, loanid: loanId, status: isApproved } = req.body;
 
         if (!customerId || !loanId || !isApproved) {
             return res.status(400).send("Missing required fields");
         }
 
-        const customer = await Customer.findById(customerId);
+        const customer = await Customer.findById(customerId, null, { session });
         if (!customer) {
             return res.status(404).send("Customer not found");
         }
 
-        const loan = await Loan.findById(loanId);
+        const loan = await Loan.findById(loanId, null, { session });
         if (!loan) {
             return res.status(404).send("Loan not found");
         }
@@ -80,10 +81,10 @@ exports.loanRequestHandler = async(req, res) => {
                 startDate: Date.now(),
                 endDate
             },{session});
-            if (updatedLoan.modifiedCount!=1) {
+            if (updatedLoan.modifiedCount!==1) {
                 await session.abortTransaction();
                 session.endSession();
-                return res.status(500).send("Failed to update loan status");
+                return res.status(500).send("Failed to update loan status  and should be aborted.");
             }
 
             await session.commitTransaction();
