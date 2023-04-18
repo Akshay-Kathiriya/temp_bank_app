@@ -5,6 +5,7 @@ const Loan = require("../models/loan");
 const Transaction = require("../models/transaction");
 const ObjectId = require("mongodb").ObjectId;
 const mongoose = require('mongoose');
+const Account = require('../models/account')
 //It will fetch all customer details from Customer
 exports.getCustomerDetails = async(req, res) => {
     try {
@@ -136,3 +137,18 @@ exports.getAllTransaction = async(req, res) => {
     }
 };
 
+
+exports.bankAccount = async(req, res)=>{
+    function generateAccountNumber() {
+        const num = Math.floor(Math.random() * 1000000000000);
+        return num;
+    }
+    const accountNumber = generateAccountNumber();
+    const account = new Account({
+        accountNumber,
+        admin:req.userId
+    })
+
+    await account.save();
+    res.send("Account generated.")
+}
