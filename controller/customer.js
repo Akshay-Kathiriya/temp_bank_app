@@ -66,7 +66,7 @@ exports.amountTransfer = async(req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { accountId, accountNumber, amount } = req.body;
+        const { accountId, accountNumber, amount, type } = req.body;
 
         const receiverAccount = await Account.findOne({ accountNumber }, null, { session });
 
@@ -78,6 +78,11 @@ exports.amountTransfer = async(req, res) => {
 
         if (!senderAccount) {
             return res.status(200).send("Account not found.")
+        }
+
+        let rtype= 'credit';
+        if(type==='loanDebit'){
+            rtype = 'loanCredit'
         }
 
         // Insert transaction
@@ -99,11 +104,24 @@ exports.amountTransfer = async(req, res) => {
         // Insert transaction for receiver
         const transferAtReceiver = new Transaction({
             customer: receiverAccount._id,
-            type: "credit",
+            type: rtype,
             AccountNumber: senderAccount.accountNumber,
             amount
         });
         const details = await transferAtReceiver.save({ session });
+
+        if(type==='loanDebit'){
+        const updatedLoan = await Loan.updateOne(
+            { _id: req.body.loanid },
+            {
+              $inc: { amount: -amount },
+            },
+            { session }
+          );
+          if (updatedLoan.modifiedCount !== 1) {
+            throw new Error("Failed to update loan.");
+          }
+        }
 
         // Update sender and receiver balances
         const senderBalanceAfterTransfer = senderAccount.balance - amount;
@@ -145,6 +163,7 @@ exports.amountTransfer = async(req, res) => {
         res.status(500).send("Internal Server Error");
     }
 };
+
 
 exports.transactionDetails = async(req, res) => {
     try {
