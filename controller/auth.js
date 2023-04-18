@@ -117,6 +117,7 @@ exports.Customer_signup = async(req, res, next) => {
             password: req.body.password
         }
         const userExistsAlready = await Customer.find({ email: userToCreate.email })
+        console.log(userExistsAlready);
         if (userExistsAlready.length > 0) {
             return res.status(401).json({ msg: 'E-mail already exist' })
         }
@@ -129,9 +130,9 @@ exports.Customer_signup = async(req, res, next) => {
             password: hashedPw,
             username: userToCreate.username,
             address: userToCreate.address,
-            //accountNumber: accountNumber,
+            // accountNumber: accountNumber,
             phone_no: userToCreate.phone_no,
-            //balance: userToCreate.balance
+            // balance: userToCreate.balance
 
         });
         await user.save();

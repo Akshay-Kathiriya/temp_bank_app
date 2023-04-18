@@ -78,28 +78,53 @@ exports.loanRequestHandler = async(req, res) => {
             return res.status(404).send("Loan not found");
         }
 
+        const accountNumber = 99999999999
+        const bankAccount = await Account.findOne({accountNumber}, null, {session});
+        console.log(req.userId);
+        if (!bankAccount) {
+            return res.status(404).send("Bank Account not found");
+        }
         const approved = "approved"
         if (isApproved === approved) {
-            const newBalance = customer.balance + loan.amount;
-            
-            const transaction = new Transaction({
-                customer: req.userId,
-                type: "loanDebit",
-                AccountNumber: customer.accountNumber,
+            const newAccountBalance = account.balance + loan.amount;
+            const newBankBalance = bankAccount.balance - loan.amount;
+            const  receiveTransaction = new Transaction({
+                customer: account.customer,
+                type: "loanCredit",
+                AccountNumber: account.accountNumber,
                 amount:  loan.amount ,
                 date: Date.now(),
             });
-            const transactionDetails = await transaction.save({session});
-            
-            await Account.updateOne({ _id: accountId }, { $set: { balance: newBalance, }, $push: {transactions: transactionDetails._id} }, {session});
+            await receiveTransaction.save({session});
+           
+            const sendTransaction= new Transaction({
+                customer: bankAccount.customer,
+                type: "loanDebit",
+                AccountNumber: bankAccount.accountNumber,
+                amount:  loan.amount ,
+                date: Date.now(),
+            });
+            await sendTransaction.save({session});
 
-            const endDate = Date.now() + loan.period;
+          
+            const accountUpdate = await Account.updateOne({ _id: accountId }, { $set: { balance: newAccountBalance, }, $push: {transactions: receiveTransaction._id} }, {session});
+            const bankAccountUpdate = await Account.updateOne({ _id: bankAccount._id }, { $set: { balance: newBankBalance, }, $push: {transactions: sendTransaction._id} }, {session});
+            if(accountUpdate.modifiedCount != 1 || bankAccountUpdate.modifiedCount  != 1){
+                await session.abortTransaction();
+                session.endSession();
+                return res.status(500).send("Failed to update account Balance and should be aborted.");
+            }
+            const startDate = Date.now()
+            const endDate = startDate + loan.period;
+
             const updatedLoan = await Loan.updateOne({_id:loanId}, {
                 status: isApproved,
-                startDate: Date.now(),
-                endDate
+                admin: req.userId,
+                startDate,
+                endDate  
             },{session});
-            if (updatedLoan.modifiedCount!==1) {
+
+            if (updatedLoan.modifiedCount==1) {
                 await session.abortTransaction();
                 session.endSession();
                 return res.status(500).send("Failed to update loan status  and should be aborted.");
@@ -112,7 +137,7 @@ exports.loanRequestHandler = async(req, res) => {
             const updatedLoan = await Loan.updateOne({_id:loanId}, {
                 status: isApproved,
             }, {session});
-            if (!updatedLoan) {
+            if (updatedLoan.modifiedCount !== 1) {
                 await session.abortTransaction();
                 session.endSession();
                 return res.status(500).send("Failed to update loan status");
@@ -148,6 +173,9 @@ exports.setMaxLoanAmount = async(req, res) => {
 exports.getAllTransaction = async(req, res) => {
     try {
         const transactions = await Transaction.find();
+        if(!transactions){
+            return res.status(404).send("There is no Transactions happen till.");
+        }
         res.send(transactions);
     } catch (err) {
         res.send(err);
