@@ -3,11 +3,9 @@ const { validationResult } = require("express-validator");
 const Customer = require("../models/customer.js");
 const Transaction = require("../models/transaction");
 const Account = require("../models/account");
-
 const bcrypt = require("bcryptjs");
 const Admin = require("../models/admin");
 const Loan = require("../models/loan");
-
 exports.getDetails = async(req, res) => {
     try {
         console.log(req.userId);
@@ -20,7 +18,6 @@ exports.getDetails = async(req, res) => {
         return res.status(500).send(err);
     }
 };
-
 exports.createAccount = async(req, res, next) => {
     try {
         function generateAccountNumber() {
@@ -29,14 +26,12 @@ exports.createAccount = async(req, res, next) => {
         }
         const accountNumber = generateAccountNumber();
         const balance = req.body.balance;
-
         const customerAccount = new Account({
             customer: req.userId,
             accountNumber,
             balance
         });
         await customerAccount.save();
-
         res.status(201).json({
             message: 'Account created!',
         })
@@ -46,27 +41,35 @@ exports.createAccount = async(req, res, next) => {
         }
         next(err);
     }
-
 };
-
+exports.getAllAccounts = async(req, res) => {
+    try {
+        const customerDetails = await Account.find({ customer: req.userId });
+        if (!customerDetails) {
+            res.status(404).send("There is no account yet.");
+        }
+        res.status(200).send(customerDetails);
+    } catch (err) {
+        res.status(500).send({ message: err.message });
+    }
+}
 exports.amountTransfer = async(req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { accountId, accountNumber, amount } = req.body;
-
+        const { accountId, accountNumber, amount, type } = req.body;
         const receiverAccount = await Account.findOne({ accountNumber }, null, { session });
-
         if (!receiverAccount) {
             return res.status(200).send("Account not found.")
         }
-
         const senderAccount = await Account.findOne({ _id: accountId }, null, { session });
-
         if (!senderAccount) {
             return res.status(200).send("Account not found.")
         }
-
+        let rtype = 'credit';
+        if (type === 'loanDebit') {
+            rtype = 'loanCredit'
+        }
         // Insert transaction
         const transfer = new Transaction({
             customer: req.userId,
@@ -75,23 +78,28 @@ exports.amountTransfer = async(req, res) => {
             amount
         });
         const transferDetails = await transfer.save({ session });
-
         if (!transferDetails) {
             await session.abortTransaction();
             session.endSession();
             return res.status(500).send("Failed to create transfer at sender side and should be aborted.");
         }
         const transactionId = transferDetails._id;
-
         // Insert transaction for receiver
         const transferAtReceiver = new Transaction({
             customer: receiverAccount._id,
-            type: "credit",
+            type: rtype,
             AccountNumber: senderAccount.accountNumber,
             amount
         });
         const details = await transferAtReceiver.save({ session });
-
+        if (type === 'loanDebit') {
+            const updatedLoan = await Loan.updateOne({ _id: req.body.loanid }, {
+                $inc: { amount: -amount },
+            }, { session });
+            if (updatedLoan.modifiedCount !== 1) {
+                throw new Error("Failed to update loan.");
+            }
+        }
         // Update sender and receiver balances
         const senderBalanceAfterTransfer = senderAccount.balance - amount;
         if (senderBalanceAfterTransfer < 0) {
@@ -99,29 +107,23 @@ exports.amountTransfer = async(req, res) => {
             session.endSession();
             return res.status(201).send("The account does not have sufficient balance");
         }
-
         const accountUpdateAtReceiver = await Account.updateOne({ accountNumber: accountNumber }, { $inc: { balance: amount } }, { session });
         if (accountUpdateAtReceiver.modifiedCount !== 1) {
             await session.abortTransaction();
             session.endSession();
             return res.status(500).send("Failed to update account at receiver  and should be aborted.");
         }
-
         const accountUpdateAtSender = await Account.updateOne({ accountNumber: senderAccount.accountNumber }, {
             $inc: { balance: -amount },
             $push: {
                 transactions: transactionId
             }
-        }, {
-
-        }, { session });
-
+        }, {}, { session });
         if (accountUpdateAtSender.modifiedCount !== 1) {
             await session.abortTransaction();
             session.endSession();
             return res.status(500).send("Failed to update account at sender  and should be aborted.");
         }
-
         await session.commitTransaction();
         session.endSession();
         return res.status(200).send({ message: "Transfer successful!!" });
@@ -132,84 +134,20 @@ exports.amountTransfer = async(req, res) => {
         res.status(500).send("Internal Server Error");
     }
 };
-
 exports.transactionDetails = async(req, res) => {
     try {
-        const customerAccount = await Transaction.findOne({ _id: req.userId });
+        const customerAccount = await Account.findOne({ customer: req.userId }).populate('transactions');
         console.log(customerAccount);
-        //const transactions = await Transaction.find({
-        //_id: { $in: customerAccount.transactions }
-
-        if (!customerAccount) {
+        const transactions = customerAccount.transactions;
+        if (transactions.length === 0) {
             res.status(200).send("There is no transaction from your account");
-        }
-        res.status(200).send(customerAccount);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.loanDetails = async(req, res) => {
-    try {
-        const customer = req.userId;
-        const loanTransactions = await Loan.find({ customer });
-        if (!loanTransactions) {
-            throw new error("There is no loan");
-        }
-        res.status(200).send(loanTransactions);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.transactionDetails = async(req, res) => {
-    try {
-        const customerAccount = await Transaction.findOne({ _id: req.userId });
-        console.log(customerAccount);
-        //const transactions = await Transaction.find({
-        //_id: { $in: customerAccount.transactions }
-
-        if (!customerAccount) {
-            res.status(200).send("There is no transaction from your account");
-        }
-        res.status(200).send(customerAccount);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.loanDetails = async(req, res) => {
-    try {
-        const customer = req.userId;
-        const loanTransactions = await Loan.find({ customer });
-        if (!loanTransactions) {
-            throw new error("There is no loan");
-        }
-        res.status(200).send(loanTransactions);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.transactionDetails = async(req, res) => {
-    try {
-        const customer = req.userId;
-        console.log(customer);
-        const transactions = await Transaction.find({ customer });
-        console.log(transactions)
-        if (!transactions) {
-            throw new error("failed");
         }
         res.status(200).send(transactions);
     } catch (error) {
         console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" })
+        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
-}
+};
 
 exports.loanrequest = async(req, res) => {
     try {
@@ -245,12 +183,13 @@ exports.loanrequest = async(req, res) => {
 
 exports.loanDetails = async(req, res) => {
     try {
-        const customer = req.userId;
-        const loanTransactions = await Loan.find({ customer });
-        if (!loanTransactions) {
-            throw new error("There is no loan request from customer");
+        const accountid = req.params.id;
+        const loans = await Loan.find({ account: accountid });
+        console.log(loans);
+        if (loans.length === 0) {
+            res.status(200).send("There is no loans from your account");
         }
-        res.status(200).send(loanTransactions);
+        res.status(200).send(loans);
     } catch (error) {
         console.log(error);
         res.status(500).send({ message: error.message || "Some internal error occurred !!" });

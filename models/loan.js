@@ -1,16 +1,11 @@
 const mongoose = require("mongoose");
 const loanSchema = new mongoose.Schema({
-    // customer: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "Customer",
-    //     required: true,
-    // },
-    account:{
+    account: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Account",
         required: true,
     },
-    amount: { type: Number,minimum: 0 , required: true },
+    amount: { type: Number, minimum: 0, required: true },
     period: { type: Number, required: true },
     status: {
         type: String,
