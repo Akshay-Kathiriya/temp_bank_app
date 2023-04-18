@@ -48,4 +48,6 @@ router.post('/setMaxLoanAmount', [body('amount').isNumeric().withMessage('Amount
 
 router.get('/allTransactions', isAuth('Admin'), adminController.getAllTransaction);
 
+// router.post('/bankMainAccount',isAuth('Admin'), adminController.bankAccount);
+
 module.exports = router;

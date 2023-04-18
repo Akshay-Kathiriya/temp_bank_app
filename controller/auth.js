@@ -95,11 +95,11 @@ exports.login = async(req, res, next) => {
 exports.Customer_signup = async(req, res, next) => {
     try {
 
-        function generateAccountNumber() {
-            const num = Math.floor(Math.random() * 1000000000000);
-            return num;
-        }
-        const accountNumber = generateAccountNumber()
+        // function generateAccountNumber() {
+        //     const num = Math.floor(Math.random() * 1000000000000);
+        //     return num;
+        // }
+        // const accountNumber = generateAccountNumber()
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             const error = new Error('Validation failed.');
@@ -108,8 +108,8 @@ exports.Customer_signup = async(req, res, next) => {
             throw error;
         }
         let userToCreate = {
-            accountNumber: accountNumber,
-            balance: req.body.balance || 0,
+            // accountNumber: accountNumber,
+            // balance: req.body.balance || 0,
             username: req.body.username,
             email: req.body.email,
             phone_no: req.body.phone_no,
@@ -117,6 +117,7 @@ exports.Customer_signup = async(req, res, next) => {
             password: req.body.password
         }
         const userExistsAlready = await Customer.find({ email: userToCreate.email })
+        console.log(userExistsAlready);
         if (userExistsAlready.length > 0) {
             return res.status(401).json({ msg: 'E-mail already exist' })
         }
@@ -129,9 +130,9 @@ exports.Customer_signup = async(req, res, next) => {
             password: hashedPw,
             username: userToCreate.username,
             address: userToCreate.address,
-            accountNumber: accountNumber,
+            // accountNumber: accountNumber,
             phone_no: userToCreate.phone_no,
-            balance: userToCreate.balance
+            // balance: userToCreate.balance
 
         });
         await user.save();
