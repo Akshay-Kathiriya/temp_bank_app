@@ -32,6 +32,9 @@ exports.amountTransfer = async(req, res) => {
             throw new Error("Invalid Sender A/c Number!!");
         }
 
+        if (!receiverAccount || !senderAccount) {
+            throw new Error("Could not find account");
+        }
         // Insert transaction
         const transfer = new Transaction({
             customer: req.userId,
@@ -57,10 +60,6 @@ exports.amountTransfer = async(req, res) => {
         await transferAtrec.save();
 
         // Update sender and receiver balances
-
-        if (!receiverAccount || !senderAccount) {
-            throw new Error("Could not find account");
-        }
 
         const senderBalanceAfterTransfer = senderAccount.balance - amount;
         if (senderBalanceAfterTransfer < 0) {
@@ -90,20 +89,6 @@ exports.transactionDetails = async(req, res) => {
         res
             .status(500)
             .send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.loanDetails = async(req, res) => {
-    try {
-        const customer = req.userId;
-        const loanTransactions = await Loan.find({ customer });
-        if (!loanTransactions) {
-            throw new error("There is no loan");
-        }
-        res.status(200).send(loanTransactions);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
 };
 
@@ -143,12 +128,11 @@ exports.loanDetails = async(req, res) => {
         const customer = req.userId;
         const loanTransactions = await Loan.find({ customer });
         if (!loanTransactions) {
-            throw new error("There is no loan");
+            res.status(200).send("There is no loan requested from your account");
         }
         res.status(200).send(loanTransactions);
     } catch (error) {
         console.log(error);
         res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
-
 };
