@@ -54,10 +54,7 @@ exports.amountTransfer = async(req, res) => {
     session.startTransaction();
     try {
         const { accountId, accountNumber, amount } = req.body;
-        // const statustype = type === "debit" ? "credit" : "debit";
-        // const amountType = type === "debit" ? "debitAmount" : "creditAmount";
 
-        // const senderAccount = await Customer.findOne({ _id: req.userId });
         const receiverAccount = await Account.findOne({ accountNumber }, null, { session });
 
         if (!receiverAccount) {
@@ -77,12 +74,8 @@ exports.amountTransfer = async(req, res) => {
             AccountNumber: accountNumber,
             amount,
         });
-        const transferDetails = await transfer.save({ session });
-        if (!transferDetails) {
-            await session.abortTransaction();
-            session.endSession();
-            return res.status(500).send("Failed to create transfer at sender side and should be aborted.");
-        }
+        await transfer.save({ session });
+        
         // Insert transaction for receiver
         const transferAtReceiver = new Transaction({
             customer: receiverAccount._id,
@@ -90,12 +83,8 @@ exports.amountTransfer = async(req, res) => {
             AccountNumber: senderAccount.accountNumber,
             amount,
         });
-        const rtransferDetails = await transferAtReceiver.save({ session });
-        if (!rtransferDetails) {
-            await session.abortTransaction();
-            session.endSession();
-            return res.status(500).send("Failed to create transfer at receiver and should be aborted.");
-        }
+        const details = await transferAtReceiver.save({ session });
+
         // Update sender and receiver balances
         const senderBalanceAfterTransfer = senderAccount.balance - amount;
         if (senderBalanceAfterTransfer < 0) {
@@ -143,9 +132,40 @@ exports.transactionDetails = async(req, res) => {
     }
 };
 
+exports.loanDetails = async(req, res) => {
+    try {
+        const customer = req.userId;
+        const loanTransactions = await Loan.find({ customer });
+        if (!loanTransactions) {
+            throw new error("There is no loan");
+        }
+        res.status(200).send(loanTransactions);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
+    }
+};
+
+exports.transactionDetails = async(req, res) => {
+    try {
+        const customer = req.userId;
+        console.log(customer);
+        const transactions = await Transaction.find({ customer });
+        console.log(transactions)
+        if (!transactions) {
+            throw new error("failed");
+        }
+        res.status(200).send(transactions);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ message: error.message || "Some internal error occurred !!" })
+    }
+}
+
 exports.loanrequest = async(req, res) => {
     try {
-        const customerId = req.userId;
+        // const customerId = req.userId;
+        const accountId = req.body.accountid;
         const amount = req.body.amount;
         const period = req.body.period;
 
@@ -159,13 +179,14 @@ exports.loanrequest = async(req, res) => {
         }
 
         const loanSchema = new Loan({
-            customer: customerId,
+            account: accountId,
             amount,
             period,
             admin: admin._id,
         });
-
-        await loanSchema.save();
+        console.log(loanSchema)
+        const sch = await loanSchema.save();
+        console.log
         res.status(200).send("Loan is requested.");
 
     } catch (err) {
@@ -178,7 +199,7 @@ exports.loanDetails = async(req, res) => {
         const customer = req.userId;
         const loanTransactions = await Loan.find({ customer });
         if (!loanTransactions) {
-            res.status(200).send("There is no loan requested from your account");
+            throw new error("There is no loan request from customer");
         }
         res.status(200).send(loanTransactions);
     } catch (error) {
@@ -186,3 +207,4 @@ exports.loanDetails = async(req, res) => {
         res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
 };
+

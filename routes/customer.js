@@ -12,14 +12,13 @@ router.post('/signup', [
         body('email')
         .isEmail()
         .withMessage('Please enter a valid email.')
-        .custom((value, { req }) => {
+        .custom(async(value, { req }) => {
             return Customer.findOne({ email: value }).then(userDoc => {
                 if (userDoc) {
                     return Promise.reject('E-mail address already exists! ')
                 }
             })
-        })
-        .normalizeEmail(),
+        }),
         body('password').trim().isLength({ min: 3 }),
         body('username').trim().not().isEmpty(),
         body('phone_no').trim().not().isEmpty(),
