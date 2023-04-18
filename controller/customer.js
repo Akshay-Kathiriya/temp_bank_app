@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const { validationResult } = require("express-validator");
 const Customer = require("../models/customer.js");
 const Transaction = require("../models/transaction");
@@ -104,7 +105,7 @@ exports.amountTransfer = async(req, res) => {
         }
 
         const accountUpdateAtReceiver = await Account.updateOne({ accountNumber: accountNumber }, { $inc: { balance: amount } }, { session });
-        if (accountUpdate.modifiedCount !== 1) {
+        if (accountUpdateAtReceiver.modifiedCount !== 1) {
             await session.abortTransaction();
             session.endSession();
             return res.status(500).send("Failed to update account at receiver  and should be aborted.");
