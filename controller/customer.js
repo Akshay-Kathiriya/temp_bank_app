@@ -73,22 +73,25 @@ exports.amountTransfer = async(req, res) => {
         // Insert transaction
         const transfer = new Transaction({
             customer: req.userId,
-            type: "credit",
+            type: req.body.type,
             AccountNumber: accountNumber,
-            amount,
+            amount
         });
         const transferDetails = await transfer.save({ session });
+
         if (!transferDetails) {
             await session.abortTransaction();
             session.endSession();
             return res.status(500).send("Failed to create transfer at sender side and should be aborted.");
         }
+        const transactionId = transferDetails._id;
+
         // Insert transaction for receiver
         const transferAtReceiver = new Transaction({
             customer: receiverAccount._id,
-            type: "debit",
+            type: "credit",
             AccountNumber: senderAccount.accountNumber,
-            amount,
+            amount
         });
         const rtransferDetails = await transferAtReceiver.save({ session });
         if (!rtransferDetails) {
@@ -111,7 +114,15 @@ exports.amountTransfer = async(req, res) => {
             return res.status(500).send("Failed to update account at receiver  and should be aborted.");
         }
 
-        const accountUpdateAtSender = await Account.updateOne({ accountNumber: senderAccount.accountNumber }, { $inc: { balance: -amount } }, { session });
+        const accountUpdateAtSender = await Account.updateOne({ accountNumber: senderAccount.accountNumber }, {
+            $inc: { balance: -amount },
+            $push: {
+                transactions: transactionId
+            }
+        }, {
+
+        }, { session });
+
         if (accountUpdateAtSender.modifiedCount !== 1) {
             await session.abortTransaction();
             session.endSession();
@@ -131,15 +142,18 @@ exports.amountTransfer = async(req, res) => {
 
 exports.transactionDetails = async(req, res) => {
     try {
-        const customer = req.userId;
-        const transactions = await Transaction.find({ customer });
-        if (!transactions) {
+        const customerAccount = await Transaction.findOne({ _id: req.userId });
+        console.log(customerAccount);
+        //const transactions = await Transaction.find({
+        //_id: { $in: customerAccount.transactions }
+
+        if (!customerAccount) {
             res.status(200).send("There is no transaction from your account");
         }
-        res.status(200).send(transactions);
+        res.status(200).send(customerAccount);
     } catch (error) {
         console.log(error);
-        reS.status(500).send({ message: error.message || "Some internal error occurred !!" });
+        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
 };
 
