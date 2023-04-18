@@ -48,6 +48,5 @@ router.get('/loanDetails/:id', isAuth('Customer'), customerController.loanDetail
 
 router.get('/getAllAccounts', isAuth('Customer'), customerController.getAllAccounts);
 
-// router.post('/loanRepayment', isAuth('Customer'), customerController.loanRepayment);
 
 module.exports = router;

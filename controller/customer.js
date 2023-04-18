@@ -64,11 +64,11 @@ exports.amountTransfer = async(req, res) => {
 
         const receiverAccount = await Account.findOne({ accountNumber }, null, { session });
         if (!receiverAccount) {
-            return res.status(200).send("Account not found.")
+            return res.status(404).send("Account not found.")
         }
         const senderAccount = await Account.findOne({ _id: accountId }, null, { session });
         if (!senderAccount) {
-            return res.status(200).send("Account not found.")
+            return res.status(404).send("Account not found.")
         }
 
         let rtype = 'credit';
@@ -150,7 +150,7 @@ exports.transactionDetails = async(req, res) => {
         console.log(customerAccount);
         const transactions = customerAccount.transactions;
         if (transactions.length === 0) {
-            res.status(200).send("There is no transaction from your account");
+            res.status(404).send("There is no transaction from your account");
         }
         res.status(200).send(transactions);
     } catch (error) {
@@ -198,7 +198,7 @@ exports.loanDetails = async(req, res) => {
         console.log(loans);
 
         if (loans.length === 0) {
-            res.status(200).send("There is no loans from your account");
+            res.status(404).send("There is no loans from your account");
         }
         res.status(200).send(loans);
     } catch (error) {
