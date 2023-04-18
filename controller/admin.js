@@ -107,9 +107,9 @@ exports.loanRequestHandler = async(req, res) => {
             await sendTransaction.save({session});
 
           
-            const accountUpdate = await Account.updateOne({ _id: accountId }, { $set: { balance: newAccountBalance, }, $push: {transactions: receiveTransaction._id} }, {session});
-            const bankAccountUpdate = await Account.updateOne({ _id: bankAccount._id }, { $set: { balance: newBankBalance, }, $push: {transactions: sendTransaction._id} }, {session});
-            if(accountUpdate.modifiedCount != 1 || bankAccountUpdate.modifiedCount  != 1){
+            const accountUpdate = await Account.updateOne({ _id: accountId }, { $set: { balance: newAccountBalance, }, $push: {loans: loanId, transactions:receiveTransaction._id} }, {session});
+            const bankAccountUpdate = await Account.updateOne({ _id: bankAccount._id }, { $set: { balance: newBankBalance, }, $push: {loans: loanId, transactions: sendTransaction._id} }, {session});
+            if(accountUpdate.modifiedCount !== 1 || bankAccountUpdate.modifiedCount  != 1){
                 await session.abortTransaction();
                 session.endSession();
                 return res.status(500).send("Failed to update account Balance and should be aborted.");
@@ -124,7 +124,7 @@ exports.loanRequestHandler = async(req, res) => {
                 endDate  
             },{session});
 
-            if (updatedLoan.modifiedCount==1) {
+            if (updatedLoan.modifiedCount!==1) {
                 await session.abortTransaction();
                 session.endSession();
                 return res.status(500).send("Failed to update loan status  and should be aborted.");

@@ -49,6 +49,19 @@ exports.createAccount = async(req, res, next) => {
 
 };
 
+exports.getAllAccounts = async(req, res)=>{
+    try{
+    const customerDetails = await Account.find({ customer: req.userId });
+    if(!customerDetails){
+        res.status(404).send("There is no account yet.");
+    }
+
+    res.status(200).send(customerDetails);
+}catch(err){
+    res.status(500).send({message: err.message});
+}
+}
+
 exports.amountTransfer = async(req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -135,81 +148,18 @@ exports.amountTransfer = async(req, res) => {
 
 exports.transactionDetails = async(req, res) => {
     try {
-        const customerAccount = await Transaction.findOne({ _id: req.userId });
+        const customerAccount = await Account.findOne({ customer: req.userId }).populate('transactions');
         console.log(customerAccount);
-        //const transactions = await Transaction.find({
-        //_id: { $in: customerAccount.transactions }
-
-        if (!customerAccount) {
+        const transactions = customerAccount.transactions;
+        if (transactions.length === 0) {
             res.status(200).send("There is no transaction from your account");
-        }
-        res.status(200).send(customerAccount);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.loanDetails = async(req, res) => {
-    try {
-        const customer = req.userId;
-        const loanTransactions = await Loan.find({ customer });
-        if (!loanTransactions) {
-            throw new error("There is no loan");
-        }
-        res.status(200).send(loanTransactions);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.transactionDetails = async(req, res) => {
-    try {
-        const customerAccount = await Transaction.findOne({ _id: req.userId });
-        console.log(customerAccount);
-        //const transactions = await Transaction.find({
-        //_id: { $in: customerAccount.transactions }
-
-        if (!customerAccount) {
-            res.status(200).send("There is no transaction from your account");
-        }
-        res.status(200).send(customerAccount);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.loanDetails = async(req, res) => {
-    try {
-        const customer = req.userId;
-        const loanTransactions = await Loan.find({ customer });
-        if (!loanTransactions) {
-            throw new error("There is no loan");
-        }
-        res.status(200).send(loanTransactions);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.transactionDetails = async(req, res) => {
-    try {
-        const customer = req.userId;
-        console.log(customer);
-        const transactions = await Transaction.find({ customer });
-        console.log(transactions)
-        if (!transactions) {
-            throw new error("failed");
         }
         res.status(200).send(transactions);
     } catch (error) {
         console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" })
+        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
-}
+};
 
 exports.loanrequest = async(req, res) => {
     try {
@@ -245,12 +195,14 @@ exports.loanrequest = async(req, res) => {
 
 exports.loanDetails = async(req, res) => {
     try {
-        const customer = req.userId;
-        const loanTransactions = await Loan.find({ customer });
-        if (!loanTransactions) {
-            throw new error("There is no loan request from customer");
+        const accountid = req.params.id; 
+        const loans = await Loan.find({ account : accountid });
+        console.log(loans);
+
+        if (loans.length===0) {
+            res.status(200).send("There is no loans from your account");
         }
-        res.status(200).send(loanTransactions);
+        res.status(200).send(loans);
     } catch (error) {
         console.log(error);
         res.status(500).send({ message: error.message || "Some internal error occurred !!" });
