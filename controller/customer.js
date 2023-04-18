@@ -18,10 +18,6 @@ exports.getDetails = async(req, res) => {
     }
 };
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 exports.amountTransfer = async(req, res) => {
     try {
         const { type, senderAccountNumber, receiverAccountNumber, amount } = req.body;
@@ -84,50 +80,15 @@ exports.transactionDetails = async(req, res) => {
         const customer = req.userId;
         const transactions = await Transaction.find({ customer });
         if (!transactions) {
-            throw new error("failed");
+            res.status(200).send("There is no transaction from your account");
         }
         res.status(200).send(transactions);
     } catch (error) {
         console.log(error);
-        res
-            .status(500)
-            .send({ message: error.message || "Some internal error occurred !!" });
+        reS.status(500).send({ message: error.message || "Some internal error occurred !!" });
     }
 };
 
-<<<<<<< Updated upstream
-=======
-exports.loanDetails = async(req, res) => {
-    try {
-        const customer = req.userId;
-        const loanTransactions = await Loan.find({ customer });
-        if (!loanTransactions) {
-            throw new error("There is no loan");
-        }
-        res.status(200).send(loanTransactions);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" });
-    }
-};
-
-exports.transactionDetails = async(req, res) => {
-    try {
-        const customer = req.userId;
-        console.log(customer);
-        const transactions = await Transaction.find({ customer });
-        console.log(transactions)
-        if (!transactions) {
-            throw new error("failed");
-        }
-        res.status(200).send(transactions);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({ message: error.message || "Some internal error occurred !!" })
-    }
-}
-
->>>>>>> Stashed changes
 exports.loanrequest = async(req, res) => {
     try {
         const customerId = req.userId;
@@ -163,11 +124,7 @@ exports.loanDetails = async(req, res) => {
         const customer = req.userId;
         const loanTransactions = await Loan.find({ customer });
         if (!loanTransactions) {
-<<<<<<< Updated upstream
             res.status(200).send("There is no loan requested from your account");
-=======
-            throw new error("There is no loan request from customer");
->>>>>>> Stashed changes
         }
         res.status(200).send(loanTransactions);
     } catch (error) {
