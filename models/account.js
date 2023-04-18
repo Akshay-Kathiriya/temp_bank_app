@@ -7,7 +7,7 @@ const accountSchema = new mongoose.Schema({
         ref: "Customer",
         required: true,
     },
-    balance: { type: Number, required: true, default: 0 },
+    balance: { type: Number, minimum: 0, required: true, default: 0 },
     transactions: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Transaction",

@@ -10,6 +10,9 @@ const Account = require('../models/account')
 exports.getCustomerDetails = async(req, res) => {
     try {
         const details = await Customer.find();
+        if(!details){
+            return res.status(404).send("Customer not found"); 
+        }
         res.status(200).json(details);
     } catch (err) {
         console.error(err);
@@ -21,8 +24,11 @@ exports.getCustomerDetails = async(req, res) => {
 exports.totalAmount = async(req, res) => {
     try {
         let total = 0;
-        const details = await Customer.find();
-        for (let i = 0; i < details.length; i++) {
+        const allaccount = await Account.find();
+        if(!allaccount){
+            return res.status(404).send("There is no account.");
+        }
+        for (let i = 0; i < allaccount.length; i++) {
             total += details[i].balance;
         }
         res.status(200).send({ total });
@@ -36,6 +42,9 @@ exports.totalAmount = async(req, res) => {
 exports.loanrequest = async(req, res) => {
     try {
         const loanDetails = await Loan.find();
+        if(!loanDetails){
+            return res.status(404).send("There is no loans applied.");
+        }
         res.status(200).send(loanDetails);
     } catch (err) {
         console.log(err);
@@ -48,13 +57,18 @@ exports.loanRequestHandler = async(req, res) => {
      session.startTransaction();
     try {
         
-        const { id: customerId, loanid: loanId, status: isApproved } = req.body;
-
-        if (!customerId || !loanId || !isApproved) {
+        const { accountid: accountId, loanid: loanId, status: isApproved } = req.body;
+        
+        if (!accountId || !loanId || !isApproved) {
             return res.status(400).send("Missing required fields");
         }
 
-        const customer = await Customer.findById(customerId, null, { session });
+        const account = await Account.findById(accountId, null, {session});
+        if (!account) {
+            return res.status(404).send("Account not found");
+        }
+
+        const customer = await Customer.findById(account.customer, null, { session });
         if (!customer) {
             return res.status(404).send("Customer not found");
         }
@@ -64,9 +78,10 @@ exports.loanRequestHandler = async(req, res) => {
             return res.status(404).send("Loan not found");
         }
 
-        if (isApproved === "approved") {
+        const approved = "approved"
+        if (isApproved === approved) {
             const newBalance = customer.balance + loan.amount;
-            await Customer.updateOne({ _id: customerId }, { $set: { balance: newBalance } }, {session});
+            
             const transaction = new Transaction({
                 customer: req.userId,
                 type: "loanDebit",
@@ -74,7 +89,9 @@ exports.loanRequestHandler = async(req, res) => {
                 amount:  loan.amount ,
                 date: Date.now(),
             });
-            await transaction.save({session});
+            const transactionDetails = await transaction.save({session});
+            
+            await Account.updateOne({ _id: accountId }, { $set: { balance: newBalance, }, $push: {transactions: transactionDetails._id} }, {session});
 
             const endDate = Date.now() + loan.period;
             const updatedLoan = await Loan.updateOne({_id:loanId}, {
@@ -138,17 +155,17 @@ exports.getAllTransaction = async(req, res) => {
 };
 
 
-exports.bankAccount = async(req, res)=>{
-    function generateAccountNumber() {
-        const num = Math.floor(Math.random() * 1000000000000);
-        return num;
-    }
-    const accountNumber = generateAccountNumber();
-    const account = new Account({
-        accountNumber,
-        admin:req.userId
-    })
+// exports.bankAccount = async(req, res)=>{
+//     function generateAccountNumber() {
+//         const num = Math.floor(Math.random() * 1000000000000);
+//         return num;
+//     }
+//     const accountNumber = generateAccountNumber();
+//     const account = new Account({
+//         accountNumber,
+//         admin:req.userId
+//     })
 
-    await account.save();
-    res.send("Account generated.")
-}
+//     await account.save();
+//     res.send("Account generated.")
+// }
