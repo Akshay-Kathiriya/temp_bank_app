@@ -45,4 +45,7 @@ router.get('/transactions', isAuth('Customer'), customerController.transactionDe
 
 router.get('/loanDetails', isAuth('Customer'), customerController.loanDetails);
 
+
+router.get('/transactions', isAuth, customerController.transactionDetails);
+
 module.exports = router;
